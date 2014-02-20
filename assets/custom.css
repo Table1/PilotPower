@@ -1,0 +1,101 @@
+.radio input[type="radio"] {
+	margin-left: -16px;
+}
+
+.span4 {
+	min-width: 265px;
+	max-width: 265px;
+}
+
+.span8 {
+	min-width: 865px;
+	max-width: 1600px;
+	
+}
+
+.container-fluid {
+	min-width: 1200px;
+}
+
+@media (max-width: 767px){
+	.span4 {
+		width: 265px;
+	}
+	
+	.span8 {
+		width: 865px;
+		
+	}
+	
+	[class="span8"], .row-fluid [class="span8"] {
+		float: left;
+		width: 865px;
+		margin-left: 20px;
+	}
+
+	[class*="span"], .row-fluid [class*="span"] {
+		float: left;
+	}
+
+	.container-fluid {
+		min-width: 1200px;
+	}	
+}
+
+.correct{
+	font-weight: bold;
+	color: #2b9a2d;
+}
+
+.incorrect{
+	font-weight: bold;
+	color: #d02626;	
+}
+
+.tradeoffTable tr:nth-child(1) {
+	background-color: #fff !important;
+}
+
+.tradeoffTable tr:nth-child(2) {
+	background-color: #fff !important;
+}
+
+.tradeoffTable tr:nth-of-type(odd) {
+  background-color: #f0f0f0;
+}
+
+.tradeoffTable td {
+	text-align: center;
+}
+
+.tradeoffTable th {
+	border-bottom: 1px solid #333;
+}
+
+.tradeoffTable th, .tradeoffTable td{
+	padding: 3px 10px;
+}
+
+.tradeoffTable .methodCol{
+	width: 150px;
+	
+}
+
+.tradeoffTable .leftCol {
+	text-align: right !important;
+}
+
+.tradeoffTable .lastCol {
+	border-right: 1px solid #000;
+}
+
+.tradeoffTable .dashedCol {
+	border-right: 1px dashed #ccc;
+}
+
+
+.tradeoffTable .headingCol {
+	text-align: center;
+	font-weight: bold;
+	vertical-align: bottom;
+}
