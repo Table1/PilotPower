@@ -61,7 +61,8 @@ shinyUI(pageWithSidebar(
 				plotOutput("pilotStudyPlot"),
         downloadButton("downloadPilotPlotPNG", "PNG"),
 				downloadButton("downloadPilotPlotPDF", "PDF"),
-				downloadButton("downloadPilotPlotEPS", "EPS")
+				downloadButton("downloadPilotPlotEPS", "EPS"),
+        HTML('<br><br>')
 	    ),
 	    tabPanel("2. Proceed Decision",
 	    	HTML("Based upon our simulated data, the below table lists how often across simulations we would proceed to a full trial when applying certain decision rules to our pilot study results.<br><br>"),
