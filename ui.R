@@ -46,7 +46,9 @@ shinyUI(pageWithSidebar(
    	helpText(HTML("<h4>Simulation Settings</h4>")),
   	
   	numericInput("simulations", "Number of Simulations:", 
-  	            min=100, max=100000, value=500, step=100)  	
+  	            min=100, max=100000, value=500, step=100),
+    HTML('<hr>'),
+    HTML('<div style="width: 190px; position: relative; margin: 0 auto;"><img src="assets/GitHub-Mark-32px.png" style="float: left; width: 16px;"> <span style="position: relative; margin: 0 0 0 8px; bottom: 2px; font-size: 1.15em;"><a href="https://github.com/Table1/PilotPower">PilotPower on GitHub</a></span></div>')
   ),
 
   mainPanel(
@@ -158,10 +160,8 @@ shinyUI(pageWithSidebar(
 			    	HTML("The below data are from simulations where all sample sizes are large enough to detect the clinically significant effect size.<br><br>"),
 			    	dataTableOutput("noPilotFullTrialResultsData")
 			    )
-			)
-		)
+			  )
+	  	)
   	)
-  
-
   )
 ))
