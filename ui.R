@@ -57,9 +57,9 @@ shinyUI(pageWithSidebar(
   		  htmlOutput("pilotStudyNotice"),
 	    	tableOutput("pilotResults"),
 				plotOutput("pilotStudyPlot"),
-        downloadButton("downloadPilotPlotPNG", "Download PNG"),
-				downloadButton("downloadPilotPlotPDF", "Download PDF"),
-				downloadButton("downloadPilotPlotEPS", "Download EPS")
+        downloadButton("downloadPilotPlotPNG", "PNG"),
+				downloadButton("downloadPilotPlotPDF", "PDF"),
+				downloadButton("downloadPilotPlotEPS", "EPS")
 	    ),
 	    tabPanel("2. Proceed Decision",
 	    	HTML("Based upon our simulated data, the below table lists how often across simulations we would proceed to a full trial when applying certain decision rules to our pilot study results.<br><br>"),
@@ -74,9 +74,9 @@ shinyUI(pageWithSidebar(
 	    	htmlOutput("apparentCasesSaved"),
 	    	htmlOutput("proceedAlwaysNote"),
 	    	plotOutput("sampleSizePlot"),
-	    	downloadButton("downloadPowerCalcPilotPlotPNG", "Download PNG"),
-	    	downloadButton("downloadPowerCalcPilotPlotPDF", "Download PDF"),
-	    	downloadButton("downloadPowerCalcPilotPlotEPS", "Download EPS"),
+	    	downloadButton("downloadPowerCalcPilotPlotPNG", "PNG"),
+	    	downloadButton("downloadPowerCalcPilotPlotPDF", "PDF"),
+	    	downloadButton("downloadPowerCalcPilotPlotEPS", "EPS"),
         HTML('<br><br>')
 	    ),
 	    tabPanel("4. Full Trial",
@@ -86,17 +86,17 @@ shinyUI(pageWithSidebar(
 				tabPanel("Using Pilot Effect Size to Calculate Sample Size",
 						tableOutput("fullTrialStats"),
 						plotOutput("fullTrialDensityPlot"),
-						downloadButton("downloadFullTrialPilotESPoweredPNG", "Download PNG"),
-						downloadButton("downloadFullTrialPilotESPoweredPDF", "Download PDF"),
-						downloadButton("downloadFullTrialPilotESPoweredEPS", "Download EPS"),
+						downloadButton("downloadFullTrialPilotESPoweredPNG", "PNG"),
+						downloadButton("downloadFullTrialPilotESPoweredPDF", "PDF"),
+						downloadButton("downloadFullTrialPilotESPoweredEPS", "EPS"),
             HTML('<br><br>')
 				),
 				tabPanel("Using Clinically Significant Effect Size to Calculate Sample Size",
 						tableOutput("noPilotFullTrialStats"),
 						plotOutput("noPilotFullTrialDensityPlot"),
-						downloadButton("downloadFullTrialPracticalESPoweredPNG", "Download PNG"),
-						downloadButton("downloadFullTrialPracticalESPoweredPDF", "Download PDF"),
-						downloadButton("downloadFullTrialPracticalESPoweredEPS", "Download EPS"),
+						downloadButton("downloadFullTrialPracticalESPoweredPNG", "PNG"),
+						downloadButton("downloadFullTrialPracticalESPoweredPDF", "PDF"),
+						downloadButton("downloadFullTrialPracticalESPoweredEPS", "EPS"),
 						HTML('<br><br>')            
         )
 			)						
@@ -142,18 +142,18 @@ shinyUI(pageWithSidebar(
 	    tabPanel("Data",
 	    	tabsetPanel(
 			    tabPanel("Pilot Simulation Data",
-            downloadButton('downloadPilotData', 'Download CSV File'),
+            downloadButton('downloadPilotData', 'CSV File'),
             HTML('<br><br>'),
 			    	dataTableOutput("pilotResultsData")
 			    ),
 			    tabPanel("Trial Simulation Data (Powered by Pilot Effect Size)",
-            downloadButton('downloadTrialPilotESData', 'Download CSV File'),
+            downloadButton('downloadTrialPilotESData', 'CSV File'),
             HTML('<br><br>'),
 			    	HTML("The below data are from simulations where all sizes are made to be large enough to detect the observed pilot study effect size.<br><br>"),
 			      dataTableOutput("fullTrialResultsData")
 			    ),
 			    tabPanel("Trial Simulation Data (Powered by Practical Significance)",
-            downloadButton('downloadTrialPracticalESData', 'Download CSV File'),
+            downloadButton('downloadTrialPracticalESData', 'CSV File'),
             HTML('<br><br>'),                   
 			    	HTML("The below data are from simulations where all sample sizes are large enough to detect the clinically significant effect size.<br><br>"),
 			    	dataTableOutput("noPilotFullTrialResultsData")
