@@ -7,10 +7,10 @@ The quickest way to run the app natively on your computer is:
 
 1. Ensure dependencies are installed:
 
-```
-install.packages('shiny')
-install.packages('pwr')
-```
+  ```
+  install.packages('shiny')
+  install.packages('pwr')
+  ```
 
 2. Load Shiny and run from the GitHub zip:
 
@@ -33,7 +33,7 @@ To run the application inside R, load R, and type:
 ```
 library(shiny)
 runGitHub('PilotPower', 'Table1')
-``
+```
 
 
 If you'd like to make modifications to the program and run it, download the master code:  https://github.com/Table1/PilotPower/archive/master.zip. 
