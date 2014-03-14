@@ -14,10 +14,10 @@ The quickest way to run the app natively on your computer is:
 
 2. Load Shiny and run from the GitHub zip:
 
-```
-library(shiny)
-shiny::runGitHub('PilotPower', 'Table1')
-```
+  ```
+  library(shiny)
+  shiny::runGitHub('PilotPower', 'Table1')
+  ```
 
 To run Pilot Power locally, outside of R:
 
