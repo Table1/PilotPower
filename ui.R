@@ -4,51 +4,49 @@ customCSS <- HTML('<link rel="stylesheet" type="text/css" href="assets/custom.cs
 
 shinyUI(pageWithSidebar(
 
-  # Application title
   headerPanel("Pilot Power", "Pilot Power: A Pilot Study Power Simulator"),
 
   sidebarPanel(
- 	 tags$head(customCSS),
-
- 	helpText(HTML("<h4>Assumed Parameters</h4>")),
-	helpText(HTML("<em>in standard deviation units</em>")),
- 	
-	numericInput("true_effect_size", "Intervention True Effect Size:", 
-	            value=0.25, step=0.05),
-	            
-	
-	numericInput("clinical_effect_size", "Clinically Significant Effect Size:", 
-	             value=0.25, step=0.05),
-
-	HTML('<hr>'),
- 	helpText(HTML("<h4>Design Choices</h4>")),
-	
-	numericInput("sample_size", "Pilot Study Sample Size:", 
-	            min=10, value=50, step=10),
-
-		
-	numericInput("alpha", "Significance Level:", 
-	            min=0.01, max=0.99, value=0.05, step=0.01),
-	
-	numericInput("power", "Power Level:", 
-	            min=0.01, max=0.99, value=0.80, step=0.01),
-	            
-	selectInput("proceed_method", "Basis To Conduct Full Trial:",
-		list("Point Estimate Comparison: pilot study effect size greater than clinically significant effect size" = "pointestimate_clinical",
-		"Point Estimate Comparison: pilot study effect size greater than zero" = "pointestimate_zero",
-		"T-Test: pilot study effect size not equal to zero (Two-tail Test)" = "ttest_twotail",
-		"T-Test: pilot study effect size greater than zero (One-tail Test)" = "ttest_onetail",
-		"T-Test vs. Clinical Significance: pilot study effect size not equal to clinically significant effect size (Two-tail Test)" = "ttest_clinical_twotail",
-		"T-Test vs. Clinical Significance: pilot study effect size greater than clinically significant effect size (One-tail Test)" = "ttest_clinical_onetail",
-		"Always" = "always")),
-	            
-	
-	
-	HTML('<hr>'),
- 	helpText(HTML("<h4>Simulation Settings</h4>")),
-	
-	numericInput("simulations", "Number of Simulations:", 
-	            min=100, max=100000, value=500, step=100)  	
+    tags$head(customCSS),
+  
+   	helpText(HTML("<h4>Assumed Parameters</h4>")),
+  	helpText(HTML("<em>in standard deviation units</em>")),
+   	
+  	numericInput("true_effect_size", "Intervention True Effect Size:", 
+  	            value=0.30, step=0.05),
+  	              	
+  	numericInput("clinical_effect_size", "Practically Significant Effect Size:", 
+  	             value=0.15, step=0.05),
+  
+  	HTML('<hr>'),
+   	helpText(HTML("<h4>Design Choices</h4>")),
+  	
+  	numericInput("sample_size", "Pilot Study Sample Size:", 
+  	            min=10, value=50, step=10),
+  
+  		
+  	numericInput("alpha", HTML(paste('Significance Level (<span style="font-size: 1em;">&alpha;</span>):', sep='')), 
+  	            min=0.01, max=0.99, value=0.05, step=0.01),
+  	
+  	numericInput("power", HTML(paste('Power (<span style="font-size: 1em;">1 - &beta;</span>):', sep='')), 
+  	            min=0.01, max=0.99, value=0.80, step=0.01),
+  	            
+  	selectInput("proceed_method", "Basis To Conduct Full Trial:",
+  		list("Point Estimate Comparison: pilot study effect size greater than clinically significant effect size" = "pointestimate_clinical",
+  		"Point Estimate Comparison: pilot study effect size greater than zero" = "pointestimate_zero",
+  		"T-Test: pilot study effect size not equal to zero (Two-tail Test)" = "ttest_twotail",
+  		"T-Test: pilot study effect size greater than zero (One-tail Test)" = "ttest_onetail",
+  		"T-Test vs. Clinical Significance: pilot study effect size not equal to clinically significant effect size (Two-tail Test)" = "ttest_clinical_twotail",
+  		"T-Test vs. Clinical Significance: pilot study effect size greater than clinically significant effect size (One-tail Test)" = "ttest_clinical_onetail",
+  		"Always" = "always")),
+  	            
+  	
+  	
+  	HTML('<hr>'),
+   	helpText(HTML("<h4>Simulation Settings</h4>")),
+  	
+  	numericInput("simulations", "Number of Simulations:", 
+  	            min=100, max=100000, value=500, step=100)  	
   ),
 
   mainPanel(
@@ -56,9 +54,12 @@ shinyUI(pageWithSidebar(
 
   	tabsetPanel(
   		tabPanel("1. Pilot Study",
-  				htmlOutput("pilotStudyNotice"),
-	    		tableOutput("pilotResults"),
-				plotOutput("pilotStudyPlot")
+  		  htmlOutput("pilotStudyNotice"),
+	    	tableOutput("pilotResults"),
+				plotOutput("pilotStudyPlot"),
+        downloadButton("downloadPilotPlotPNG", "Download PNG"),
+				downloadButton("downloadPilotPlotPDF", "Download PDF"),
+				downloadButton("downloadPilotPlotEPS", "Download EPS")
 	    ),
 	    tabPanel("2. Proceed Decision",
 	    	HTML("Based upon our simulated data, the below table lists how often across simulations we would proceed to a full trial when applying certain decision rules to our pilot study results.<br><br>"),
@@ -72,7 +73,11 @@ shinyUI(pageWithSidebar(
 	    	htmlOutput("powerCalculationNotice"),
 	    	htmlOutput("apparentCasesSaved"),
 	    	htmlOutput("proceedAlwaysNote"),
-	    	plotOutput("sampleSizePlot")
+	    	plotOutput("sampleSizePlot"),
+	    	downloadButton("downloadPowerCalcPilotPlotPNG", "Download PNG"),
+	    	downloadButton("downloadPowerCalcPilotPlotPDF", "Download PDF"),
+	    	downloadButton("downloadPowerCalcPilotPlotEPS", "Download EPS"),
+        HTML('<br><br>')
 	    ),
 	    tabPanel("4. Full Trial",
 			htmlOutput("fullTrialNotice"),
@@ -80,12 +85,20 @@ shinyUI(pageWithSidebar(
 			tabsetPanel(
 				tabPanel("Using Pilot Effect Size to Calculate Sample Size",
 						tableOutput("fullTrialStats"),
-						plotOutput("fullTrialDensityPlot")
+						plotOutput("fullTrialDensityPlot"),
+						downloadButton("downloadFullTrialPilotESPoweredPNG", "Download PNG"),
+						downloadButton("downloadFullTrialPilotESPoweredPDF", "Download PDF"),
+						downloadButton("downloadFullTrialPilotESPoweredEPS", "Download EPS"),
+            HTML('<br><br>')
 				),
 				tabPanel("Using Clinically Significant Effect Size to Calculate Sample Size",
 						tableOutput("noPilotFullTrialStats"),
-						plotOutput("noPilotFullTrialDensityPlot")
-				)
+						plotOutput("noPilotFullTrialDensityPlot"),
+						downloadButton("downloadFullTrialPracticalESPoweredPNG", "Download PNG"),
+						downloadButton("downloadFullTrialPracticalESPoweredPDF", "Download PDF"),
+						downloadButton("downloadFullTrialPracticalESPoweredEPS", "Download EPS"),
+						HTML('<br><br>')            
+        )
 			)						
 	    ),
 	    tabPanel("5. Conclusions",
@@ -129,13 +142,19 @@ shinyUI(pageWithSidebar(
 	    tabPanel("Data",
 	    	tabsetPanel(
 			    tabPanel("Pilot Simulation Data",
+            downloadButton('downloadPilotData', 'Download CSV File'),
+            HTML('<br><br>'),
 			    	dataTableOutput("pilotResultsData")
 			    ),
-			    tabPanel("Trial Simulation Data",
+			    tabPanel("Trial Simulation Data (Powered by Pilot Effect Size)",
+            downloadButton('downloadTrialPilotESData', 'Download CSV File'),
+            HTML('<br><br>'),
 			    	HTML("The below data are from simulations where all sizes are made to be large enough to detect the observed pilot study effect size.<br><br>"),
-			    	dataTableOutput("fullTrialResultsData")
+			      dataTableOutput("fullTrialResultsData")
 			    ),
-			    tabPanel("Trial Simulation Data (No Pilot)",
+			    tabPanel("Trial Simulation Data (Powered by Practical Significance)",
+            downloadButton('downloadTrialPracticalESData', 'Download CSV File'),
+            HTML('<br><br>'),                   
 			    	HTML("The below data are from simulations where all sample sizes are large enough to detect the clinically significant effect size.<br><br>"),
 			    	dataTableOutput("noPilotFullTrialResultsData")
 			    )
