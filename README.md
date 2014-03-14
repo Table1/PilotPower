@@ -5,11 +5,12 @@ Pilot Power is a program to allow research to simulate the implications of using
 
 **Ensuring dependencies are installed**
 
-Before PilotPower will run on your machine, you will need to make sure you have R installed, and that you have installed the ```shiny```, ```shiny-incuator```, and ```pwr``` packages:
+Before PilotPower will run on your machine, you will need to make sure you have R installed, and that you have installed the ```shiny```, ```shiny-incuator```, ```devtools```, and ```pwr``` packages:
 
 ```
 install.packages('shiny')
 install.packages('pwr')
+install.packages('devtools')
 devtools::install_github("shiny-incubator", "rstudio")
 ```
 
