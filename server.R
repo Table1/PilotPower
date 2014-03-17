@@ -1,10 +1,10 @@
 library(shiny)
 library(pwr)
-
+library(shinyIncubator)
 
 tradeoffTableColumnHeaders <- c("Simulations", "Proceed to Trial", "Found Effect")
 
-shinyServer(function(input, output) {
+shinyServer(function(input, output, session) {
   
   ###################################################
   ### SETTINGS	
@@ -31,27 +31,116 @@ shinyServer(function(input, output) {
     inputValues()
   })
   
-  sample_size <- reactive({input$sample_size})
-  true_effect_size <- reactive({input$true_effect_size})
-  clinical_level <- reactive({input$clinical_effect_size})
-  alpha <- reactive({input$alpha})
-  power <- reactive({input$power})
-  simulations <- reactive({input$simulations})
+  # Update status: only update simulation variables for a second time after update button is pressed
+  update <- reactive({
+    input$update    
+  })
   
+  last_update <- reactive({
+    if(input$update == 0){
+      return(0)
+    }
+    
+    return(isolate({
+      input$update 
+    }))
+  })  
+  
+  output$update <- renderText({ update() })
+  output$last_update <- renderText({ last_update() })
+  
+  ## Simulation Variables
+  
+  sample_size <- reactive({
+    if(update() != last_update()){
+      return(NULL)
+    }
+    
+    return(isolate({    
+      input$sample_size
+    }))
+  })
+  
+  true_effect_size <- reactive({
+    if(update() != last_update()){
+      return(NULL)
+    }
+    
+    return(isolate({    
+      input$true_effect_size
+    }))
+  })
+  
+  clinical_level <- reactive({
+    if(update() != last_update()){
+      return(NULL)
+    }
+    
+    return(isolate({    
+      input$clinical_effect_size
+    }))
+  })
+  
+  alpha <- reactive({
+    if(update() != last_update()){
+      return(NULL)
+    }
+    
+    return(isolate({    
+      input$alpha
+    }))
+  })
+  
+  proceedMethod <- reactive({
+    if(update() != last_update()){
+      return(NULL)
+    }
+    
+    return(isolate({
+      input$proceed_method
+    }))
+  })
+  
+  
+  power <- reactive({
+    if(update() != last_update()){
+      return(NULL)
+    }
+    
+    return(isolate({    
+      input$power
+    }))
+  })
+  
+  simulations <- reactive({
+    if(update() != last_update()){
+      return(NULL)
+    }
+    
+    return(isolate({    
+      input$simulations
+    }))
+  })
+  
+
   # allow for easy output
-  
   output$simulations <- renderText({ simulations() })
   
   ###################################################
-  ### PILOT SIMULATION
+  ### STEP 1:  Pilot Study
   ###################################################
-  
+
   ## Simulation Function of Initial Pilot Studies
   simulatePilots <- function(pilotN, trueEffect, alpha, power, clinSig, totalSim){
+    
+    progress <- Progress$new(session)
+    progress$set(message = 'Step One: Simulating pilot studies', value = 0)
+
+    
     cxMeans <- matrix(NA, nrow=totalSim, ncol=1)
     cxSDs <- matrix(NA, nrow=totalSim, ncol=1)
     txMeans <- matrix(NA, nrow=totalSim, ncol=1)
-    txSDs <- matrix(NA, nrow=totalSim, ncol=1)				
+    txSDs <- matrix(NA, nrow=totalSim, ncol=1)  			
     effectSizes <- matrix(NA, nrow=totalSim, ncol=1)
     
     #tests
@@ -66,6 +155,8 @@ shinyServer(function(input, output) {
     pClinSigOneTail <- matrix(NA, nrow=totalSim, ncol=1)
     
     for(i in 1:totalSim){
+      progress$set(value = (i/totalSim))
+      
       cx <- rnorm(pilotN/2, mean=0, sd=1)
       tx <- rnorm(pilotN/2, mean=0+trueEffect, sd=1)
       
@@ -96,25 +187,29 @@ shinyServer(function(input, output) {
       tTestClinSigOneTail <- t.test(x=tx, mu=clinSig, alternative="greater", var.equal = TRUE, conf.level = alpha)
       tClinSigOneTail[i] <- tTestClinSigOneTail$statistic
       pClinSigOneTail[i] <- tTestClinSigOneTail$p.value
+      
     }
     
     pilot_stats <- data.frame(control_mean = cxMeans, control_sd = cxSDs, treatment_mean = txMeans, treatment_sd = txSDs, effect_size = effectSizes, t_two_sample = tTwoSampleTwoTail, p_two_sample_two_tail = pTwoSampleTwoTail,p_two_sample_one_tail = pTwoSampleOneTail, t_clin_sig = tClinSigTwoTail, p_clin_sig_two_tail = pClinSigTwoTail, p_clin_sig_one_tail = pClinSigOneTail)
     
+    
+    progress$set(value = 1)
+    Sys.sleep(0.1)
+    progress$close()      
+    
     return(pilot_stats)
   }
   
-  ###################################################
-  ### STEP 1:  Pilot Study
-  ###################################################
   
   output$pilotStudyNotice <- renderText({
-    paste('For each of the ', simulations(), ' simulations, we draw ', sample_size()/2, ' treatment outcomes each from a normal distrbution with a mean of ', true_effect_size(), ' and a standard deviation of 1. We repeat this process for the control outcomes, but set the normal distribution mean to 0. Effect sizes for each simulation are calculated by subtracting the treatment mean from the control mean.<br><br>', sep='')
+    paste('For each of the ', simulations(), ' simulations, we draw ', sample_size()/2, ' treatment outcomes each from a normal distrbution with a mean of ', true_effect_size(), 'and a standard deviation of 1. We repeat this process for the control outcomes, but set the normal distribution mean to 0. Effect sizes for each simulation are calculated by subtracting the treatment mean from the control mean.<br><br>', sep='')
   })	
   
   ## Reactive variables
   # Results
   pilotResults <- reactive({
-    simulatePilots(sample_size(), true_effect_size(), alpha(), power(), clinical_level(), simulations())
+    results <- simulatePilots(sample_size(), true_effect_size(), alpha(), power(), clinical_level(), simulations())
+    return(results)
   })
   
   # Pilot Study Statistics
@@ -170,8 +265,8 @@ shinyServer(function(input, output) {
   
   
   output$pilotStudyPlot <- renderPlot({
-    plot(densControl(), xlim = xlim(), ylim = ylim(), xlab = 'Outcome Mean',
-         main = 'Smoothed Distribution of Outcomes Means by Treatment Group Across Simulations', 
+    plot(densControl(), xlim = xlim(), ylim = ylim(), xlab = 'Effect Sizes',
+         main = 'Smoothed Distribution of Effect Sizes by Treatment Group', 
          panel.first = grid())
     
     polygon(densControl(), density = -1, col = controlColor)
@@ -186,8 +281,8 @@ shinyServer(function(input, output) {
   # Annoyingly, this requires us to recreate the plot.  If I create the plot with a reactive function and call
   # the download link doesn't work.  Others have had this problem (e.g., see: https://groups.google.com/forum/#!msg/shiny-discuss/u7gwXc8_vyY/eFJtnMDTTUUJ)
   pilotStudyPlotDownloadPNG <- reactive({
-    plot(densControl(), xlim = xlim(), ylim = ylim(), xlab = 'Outcome Mean',
-         main = 'Smoothed Distribution of Outcomes Means by Treatment Group Across Simulations', 
+    plot(densControl(), xlim = xlim(), ylim = ylim(), xlab = 'Effect Sizes',
+         main = 'Smoothed Distribution of Effect Sizes by Treatment Group', 
          panel.first = grid())
     
     polygon(densControl(), density = -1, col = controlColor)
@@ -199,8 +294,8 @@ shinyServer(function(input, output) {
   })
   
   pilotStudyPlotDownloadPDF <- reactive({
-    plot(densControl(), xlim = xlim(), ylim = ylim(), xlab = 'Outcome Mean',
-         main = 'Smoothed Distribution of Outcomes Means by Treatment Group Across Simulations', 
+    plot(densControl(), xlim = xlim(), ylim = ylim(), xlab = 'Effect Sizes',
+         main = 'Smoothed Distribution of Effect Sizes by Treatment Group', 
          panel.first = grid())
     
     polygon(densControl(), density = -1, col = controlColor)
@@ -212,8 +307,8 @@ shinyServer(function(input, output) {
   })
   
   pilotStudyPlotDownloadEPS <- reactive({
-    plot(densControl(), xlim = xlim(), ylim = ylim(), xlab = 'Outcome Mean',
-         main = 'Smoothed Distribution of Outcomes Means by Treatment Group Across Simulations', 
+    plot(densControl(), xlim = xlim(), ylim = ylim(), xlab = 'Effect Sizes',
+         main = 'Smoothed Distribution of Effect Sizes by Treatment Group', 
          panel.first = grid())
     
     polygon(densTreatment(), density = 10, lty = 'dashed', angle=45)
@@ -228,7 +323,7 @@ shinyServer(function(input, output) {
   output$downloadPilotPlotPNG <- downloadHandler(
     filename = function() { paste('pilotDensityPlot', Sys.Date(), '.png', sep='') },
     content = function(file) {
-      png(file, width=700)
+      png(file)
       print(pilotStudyPlotDownloadPNG())
       dev.off()
     }
@@ -237,7 +332,7 @@ shinyServer(function(input, output) {
   output$downloadPilotPlotPDF <- downloadHandler(
     filename = function() { paste('pilotDensityPlot', Sys.Date(), '.pdf', sep='') },
     content = function(file) {
-      pdf(file, width=9)
+      pdf(file)
       print(pilotStudyPlotDownloadPDF())
       dev.off()
     }
@@ -247,7 +342,7 @@ shinyServer(function(input, output) {
     filename = function() { paste('pilotDensityPlot', Sys.Date(), '.eps', sep='') },
     content = function(file) {
       setEPS()
-      postscript(file, width=9)
+      postscript(file)
       print(pilotStudyPlotDownloadEPS())
       dev.off()
     }
@@ -261,7 +356,7 @@ shinyServer(function(input, output) {
   
   # Compare to zero
   pointEstimateZeroCount <- reactive({
-    sum(pilotResults()$effect_size > 0)
+    return(sum(pilotResults()$effect_size > 0))
   })
   
   pointEstimateZeroPercent <- reactive({
@@ -270,7 +365,7 @@ shinyServer(function(input, output) {
   
   # Compare to clin sig	
   pointEstimateClinSigCount <- reactive({
-    sum(pilotResults()$effect_size > clinical_level())
+    return(sum(pilotResults()$effect_size > clinical_level()))
   })
   
   pointEstimateClinSigPercent <- reactive({
@@ -282,7 +377,7 @@ shinyServer(function(input, output) {
   ## Two sample
   # Two-tailed	
   tTwoSampleTwoTailCount <- reactive({
-    sum(pilotResults()$p_two_sample_two_tail < alpha())
+    return(sum(pilotResults()$p_two_sample_two_tail < alpha()))
   })
   
   tTwoSampleTwoTailPercent <- reactive({
@@ -291,7 +386,7 @@ shinyServer(function(input, output) {
   
   # One-tailed
   tTwoSampleOneTailCount <- reactive({
-    sum(pilotResults()$p_two_sample_one_tail < alpha())
+    return(sum(pilotResults()$p_two_sample_one_tail < alpha()))
   })
   
   tTwoSampleOneTailPercent <- reactive({
@@ -302,7 +397,7 @@ shinyServer(function(input, output) {
   
   # Two-tailed
   tClinSigTwoTailCount <- reactive({
-    sum(pilotResults()$p_clin_sig_two_tail < alpha())
+    return(sum(pilotResults()$p_clin_sig_two_tail < alpha()))
   })
   
   tClinSigTwoTailPercent <- reactive({
@@ -311,7 +406,7 @@ shinyServer(function(input, output) {
   
   # One-tailed
   tClinSigOneTailCount <- reactive({
-    sum(pilotResults()$p_clin_sig_one_tail < alpha())
+    return(sum(pilotResults()$p_clin_sig_one_tail < alpha()))    
   })
   
   tClinSigOneTailPercent <- reactive({
@@ -345,10 +440,9 @@ shinyServer(function(input, output) {
     proceedStats()
   })		
   
-  proceedMethod <- reactive({input$proceed_method})
   
   generateProceedMethodDescription <- function(proceedMethod){
-    
+
     if(proceedMethod == "pointestimate_clinical"){
       description <- c('proceed to a full trial whenever the pilot study effect size point estimate is greater than the clinically significant effect size.')
     } else if(proceedMethod == "pointestimate_zero"){
@@ -364,12 +458,17 @@ shinyServer(function(input, output) {
     } else if(proceedMethod == 'always'){
       description <- 'proceed to a full trial regardless of the pilot study effect size.'
     }
-    
+      
     return(paste('You chose to ', description))
   }
   
   proceedMethodDescription <- reactive({
-    generateProceedMethodDescription(proceedMethod())
+
+
+    results <- generateProceedMethodDescription(proceedMethod())
+  
+    
+    return(results)
   })
   
   ###################################################
@@ -405,9 +504,14 @@ shinyServer(function(input, output) {
   })
   
   pilotStudyPowerCalculation <- function(data, alpha, power, proceedMethod, clinSig, totalSim, limit){
+    progress <- Progress$new(session)
+    progress$set(message = 'Step Three: Conducting power calculations', value = 0)  
+    
     sample_size <- matrix(NA, nrow=totalSim, ncol=1)
     
     for(i in 1:totalSim){
+      progress$set(value = (i/totalSim))
+      
       pilotRow <- data[i, ]
       
       proceed <- 0		
@@ -460,6 +564,10 @@ shinyServer(function(input, output) {
       }				
       
     }
+
+    progress$set(value = 1)
+    Sys.sleep(0.1)
+    progress$close()    
     
     return (sample_size)
   }
@@ -663,6 +771,18 @@ shinyServer(function(input, output) {
   
   # Function to simulate full trial  
   simulateFullTrial <- function(pilot_data, sample_data, trueEffect, alpha, proceedMethod, clinSig, totalSim){
+    
+    progressMessage <- 'Step Four: Simulating full trials'
+    
+    if(length(sample_data) == 1){
+      progressMessage <- paste(progressMessage, 'using practically significant effect size')
+    } else {
+      progressMessage <- paste(progressMessage, 'using pilot study effect sizes')
+    }
+    
+    progress <- Progress$new(session)
+    progress$set(message = progressMessage, value = 0)  
+    
     pilotTxMeans <- matrix(NA, nrow=totalSim, ncol=1)
     pilotCxMeans <- matrix(NA, nrow=totalSim, ncol=1)
     pilotEffectSizes <- matrix(NA, nrow=totalSim, ncol=1)
@@ -687,6 +807,8 @@ shinyServer(function(input, output) {
     pClinSigOneTail <- matrix(NA, nrow=totalSim, ncol=1)
     
     for(i in 1:totalSim){
+      progress$set(value = (i/totalSim))
+      
       #determine whether to proceed
       pilotRow = pilot_data[i, ]
       
@@ -763,6 +885,10 @@ shinyServer(function(input, output) {
     
     trial_stats <- data.frame(proceed_status = proceedStatus, pilot_treatment_mean = pilotTxMeans, pilot_control_mean = pilotCxMeans, pilot_effect_size = pilotEffectSizes, sample_size = sampleSizes, group_size = groupSizes, control_mean = cxMeans, control_sd = cxSDs, treatment_mean = txMeans, treatment_sd = txSDs, effect_size = effectSizes, t_two_sample = tTwoSampleTwoTail, p_two_sample_two_tail = pTwoSampleTwoTail,p_two_sample_one_tail = pTwoSampleOneTail, t_clin_sig = tClinSigTwoTail, p_clin_sig_two_tail = pClinSigTwoTail, p_clin_sig_one_tail = pClinSigOneTail)
     
+    progress$set(value = 1)
+    Sys.sleep(0.1)
+    progress$close()         
+    
     return(trial_stats)
   }
   
@@ -832,8 +958,8 @@ shinyServer(function(input, output) {
   
   # Combined plot
   output$fullTrialDensityPlot <- renderPlot({
-    plot(trialDensControl(), xlim = trialXlim(), ylim = trialYlim(), xlab = 'Outcome Mean',
-         main = 'Smoothed Distribution of Outcome Means by Treatment Group Across Simulations', 
+    plot(trialDensControl(), xlim = trialXlim(), ylim = trialYlim(), xlab = 'Effect Sizes',
+         main = 'Smoothed Distribution of Effect Sizes by Treatment Group', 
          panel.first = grid())
     
     polygon(trialDensControl(), density = -1, col = trialControlColor)
@@ -846,8 +972,8 @@ shinyServer(function(input, output) {
   
   # Download links  
   fullTrialPilotPoweredPlotDownloadPNG <- reactive({
-    plot(trialDensControl(), xlim = trialXlim(), ylim = trialYlim(), xlab = 'Outcome Mean',
-         main = 'Smoothed Distribution of Outcome Means by Treatment Group Across Simulations', 
+    plot(trialDensControl(), xlim = trialXlim(), ylim = trialYlim(), xlab = 'Effect Sizes',
+         main = 'Smoothed Distribution of Effect Sizes by Treatment Group', 
          panel.first = grid())
     
     polygon(trialDensControl(), density = -1, col = trialControlColor)
@@ -859,8 +985,8 @@ shinyServer(function(input, output) {
   })
   
   fullTrialPilotPoweredPlotDownloadPDF <- reactive({
-    plot(trialDensControl(), xlim = trialXlim(), ylim = trialYlim(), xlab = 'Outcome Mean',
-         main = 'Smoothed Distribution of Outcome Means by Treatment Group Across Simulations', 
+    plot(trialDensControl(), xlim = trialXlim(), ylim = trialYlim(), xlab = 'Effect Sizes',
+         main = 'Smoothed Distribution of Effect Sizes by Treatment Group', 
          panel.first = grid())
     
     polygon(trialDensControl(), density = -1, col = trialControlColor)
@@ -872,8 +998,8 @@ shinyServer(function(input, output) {
   })
   
   fullTrialPilotPoweredPlotDownloadEPS <- reactive({
-    plot(trialDensControl(), xlim = trialXlim(), ylim = trialYlim(), xlab = 'Outcome Mean',
-         main = 'Smoothed Distribution of Outcome Means by Treatment Group Across Simulations', 
+    plot(trialDensControl(), xlim = trialXlim(), ylim = trialYlim(), xlab = 'Effect Sizes',
+         main = 'Smoothed Distribution of Effect Sizes by Treatment Group', 
          panel.first = grid())
     
     polygon(trialDensControl(), density = -1, lty = 'solid')
@@ -888,7 +1014,7 @@ shinyServer(function(input, output) {
   output$downloadFullTrialPilotESPoweredPNG <- downloadHandler(
     filename = function() { paste('fullTrialPilotPoweredDensityPlot', Sys.Date(), '.png', sep='') },
     content = function(file) {
-      png(file, width=700)
+      png(file)
       print(fullTrialPilotPoweredPlotDownloadPNG())
       dev.off()
     }
@@ -897,7 +1023,7 @@ shinyServer(function(input, output) {
   output$downloadFullTrialPilotESPoweredPDF <- downloadHandler(
     filename = function() { paste('fullTrialPilotPoweredDensityPlot', Sys.Date(), '.pdf', sep='') },
     content = function(file) {
-      pdf(file, width=9)
+      pdf(file)
       print(fullTrialPilotPoweredPlotDownloadPDF())
       dev.off()
     }
@@ -907,7 +1033,7 @@ shinyServer(function(input, output) {
     filename = function() { paste('fullTrialPilotPoweredDensityPlot', Sys.Date(), '.eps', sep='') },
     content = function(file) {
       setEPS()
-      postscript(file, width=9)
+      postscript(file)
       print(fullTrialPilotPoweredPlotDownloadEPS())
       dev.off()
     }
@@ -1054,8 +1180,8 @@ shinyServer(function(input, output) {
   
   # Combined plot
   output$noPilotFullTrialDensityPlot <- renderPlot({
-    plot(noPilotTrialDensControl(), xlim = noPilotTrialXlim(), ylim = noPilotTrialYlim(), xlab = 'Outcome Mean',
-         main = 'Smoothed Distribution of Outcome Means by Treatment Group Across Simulations', 
+    plot(noPilotTrialDensControl(), xlim = noPilotTrialXlim(), ylim = noPilotTrialYlim(), xlab = 'Effect Sizes',
+         main = 'Smoothed Distribution of Effect Sizes by Treatment Group', 
          panel.first = grid())
     
     polygon(noPilotTrialDensControl(), density = -1, col = noPilotTrialControlColor)
@@ -1068,8 +1194,8 @@ shinyServer(function(input, output) {
   
   # Download links  
   fullTrialPracticalPoweredPlotDownloadPNG <- reactive({
-    plot(noPilotTrialDensControl(), xlim = noPilotTrialXlim(), ylim = noPilotTrialYlim(), xlab = 'Outcome Mean',
-         main = 'Smoothed Distribution of Outcome Means by Treatment Group Across Simulations', 
+    plot(noPilotTrialDensControl(), xlim = noPilotTrialXlim(), ylim = noPilotTrialYlim(), xlab = 'Effect Sizes',
+         main = 'Smoothed Distribution of Effect Sizes by Treatment Group', 
          panel.first = grid())
     
     polygon(noPilotTrialDensControl(), density = -1, col = noPilotTrialControlColor)
@@ -1081,8 +1207,8 @@ shinyServer(function(input, output) {
   })
   
   fullTrialPracticalPoweredPlotDownloadPDF <- reactive({
-    plot(noPilotTrialDensControl(), xlim = noPilotTrialXlim(), ylim = noPilotTrialYlim(), xlab = 'Outcome Mean',
-         main = 'Smoothed Distribution of Outcome Means by Treatment Group Across Simulations', 
+    plot(noPilotTrialDensControl(), xlim = noPilotTrialXlim(), ylim = noPilotTrialYlim(), xlab = 'Effect Sizes',
+         main = 'Smoothed Distribution of Effect Sizes by Treatment Group', 
          panel.first = grid())
     
     polygon(noPilotTrialDensControl(), density = -1, col = noPilotTrialControlColor)
@@ -1094,8 +1220,8 @@ shinyServer(function(input, output) {
   })
   
   fullTrialPracticalPoweredPlotDownloadEPS <- reactive({
-    plot(noPilotTrialDensControl(), xlim = noPilotTrialXlim(), ylim = noPilotTrialYlim(), xlab = 'Outcome Mean',
-         main = 'Smoothed Distribution of Outcome Means by Treatment Group Across Simulations', 
+    plot(noPilotTrialDensControl(), xlim = noPilotTrialXlim(), ylim = noPilotTrialYlim(), xlab = 'Effect Sizes',
+         main = 'Smoothed Distribution of Effect Sizes by Treatment Group', 
          panel.first = grid())
     
     polygon(noPilotTrialDensControl(), density = -1, lty = 'solid')
@@ -1110,7 +1236,7 @@ shinyServer(function(input, output) {
   output$downloadFullTrialPracticalESPoweredPNG <- downloadHandler(
     filename = function() { paste('fullTrialPracticalPoweredDensityPlot', Sys.Date(), '.png', sep='') },
     content = function(file) {
-      png(file, width=700)
+      png(file)
       print(fullTrialPracticalPoweredPlotDownloadPNG())
       dev.off()
     }
@@ -1119,7 +1245,7 @@ shinyServer(function(input, output) {
   output$downloadFullTrialPracticalESPoweredPDF <- downloadHandler(
     filename = function() { paste('fullTrialPracticalPoweredDensityPlot', Sys.Date(), '.pdf', sep='') },
     content = function(file) {
-      pdf(file, width=9)
+      pdf(file)
       print(fullTrialPracticalPoweredPlotDownloadPDF())
       dev.off()
     }
@@ -1129,7 +1255,7 @@ shinyServer(function(input, output) {
     filename = function() { paste('fullTrialPracticalPoweredDensityPlot', Sys.Date(), '.eps', sep='') },
     content = function(file) {
       setEPS()
-      postscript(file, width=9)
+      postscript(file)
       print(fullTrialPracticalPoweredPlotDownloadEPS())
       dev.off()
     }
@@ -1490,12 +1616,10 @@ shinyServer(function(input, output) {
                     <tr>
                     <td class="headingCol leftCol lastCol"></td>
                     <td class="headingCol lastCol" colspan="2">Over All Simulations, Conduct Full Trial?</td>
-                    <td class="headingCol lastCol" colspan="2">Over Simulations With Full Trial, Reject H<sub>0</sub>/Detect Effect?</td>
-                    <td class="headingCol lastCol" colspan="2">Over All Simulations, Reject H<sub>0</sub>/Detect Effect?</td>
+                    <td class="headingCol lastCol" colspan="2">Over Simulations With Full Trial, Reject H<sub>0</sub>?</td>
+                    <td class="headingCol lastCol" colspan="2">Over All Simulations, Reject H<sub>0</sub>?</td>
                     <td class="headingCol lastCol" colspan="2">Over All Simulations Where Reject H<sub>0</sub>, Overestimate True Effect?</td>
-                    <td class="headingCol lastCol" colspan="2">"Achieved Power" (Probability of Reject H<sub>0</sub>/Detect Effect):</td>
-                    <td class="headingCol dashedCol" colspan="2">Over All Simulations, "Partial" Power Lost By:</td>
-                    <td class="headingCol">Over All Simulations:</td>
+                    <td class="headingCol" colspan="2">"Achieved Power" (Probability of Reject H<sub>0</sub>):</td>
                     </tr>
                     <tr>
                     <th class="headingCol leftCol lastCol">Statistical Test</th>
@@ -1508,11 +1632,9 @@ shinyServer(function(input, output) {
                     <th class="headingCol">n</th>
                     <th class="headingCol lastCol">%</th>
                     <th class="headingCol">Over Simulations With Full Trial</th>
-                    <th class="headingCol lastCol">Over All Simulations</th>					
-                    <th class="headingCol">Not Conducting Trial</th>
-                    <th class="headingCol dashedCol">Not Detecting Effect</th>					
-                    <th class="headingCol">Total Power Loss</th>					
+                    <th class="headingCol">Over All Simulations</th>					
                     </tr>
+
                     <tr>
                     <td class="lastCol leftCol">Treatment mean is not equal to control mean (two-tailed t-test)</td>
                     <td>', conduct_trial_n, '/', simulations(), '</td>
@@ -1521,16 +1643,12 @@ shinyServer(function(input, output) {
                     <td class="lastCol">', round(twotail_diff_reject_null_percent, 2), '</td>
                     <td>', twotail_diff_reject_null_n, '/', simulations(), '</td>
                     <td class="lastCol">', round(twotail_diff_reject_null_all_percent, 2), '</td>
-                    
                     <td>', twotail_diff_reject_null_n_lt_true, '/', twotail_diff_reject_null_n, '</td>
                     <td class="lastCol">', round(twotail_diff_reject_null_n_lt_true_percent, 2), '</td>
-                    
                     <td>', round(twotail_diff_achieved_power_full_trial, 2), '</td>
-                    <td class="lastCol">', round(twotail_diff_achieved_power_all, 2),'</td>
-                    <td>', round(proceed_partial_power_loss, 2), '</td>
-                    <td class="dashedCol">', round(twotail_diff_reject_null_partial_power_loss, 2), '</td>
-                    <td>', round(twotail_diff_total_power_loss, 2), '</td>
+                    <td>', round(twotail_diff_achieved_power_all, 2),'</td>
                     </tr>
+
                     <tr>
                     <td class="lastCol leftCol">Treatment mean is not equal to control mean (one-tailed t-test)</td>
                     <td>', conduct_trial_n, '/', simulations(), '</td>
@@ -1539,18 +1657,12 @@ shinyServer(function(input, output) {
                     <td class="lastCol">', round(onetail_diff_reject_null_percent, 2), '</td>
                     <td>', onetail_diff_reject_null_n, '/', simulations(), '</td>
                     <td class="lastCol">', round(onetail_diff_reject_null_all_percent, 2), '</td>
-                    
-                    
                     <td>', onetail_diff_reject_null_n_lt_true, '/', onetail_diff_reject_null_n, '</td>
                     <td class="lastCol">', round(onetail_diff_reject_null_n_lt_true_percent, 2), '</td>
-                    
-                    
                     <td>', round(onetail_diff_achieved_power_full_trial, 2), '</td>
-                    <td class="lastCol">', round(onetail_diff_achieved_power_all, 2), '</td>					
-                    <td>', round(proceed_partial_power_loss, 2), '</td>
-                    <td class="dashedCol">', round(onetail_diff_reject_null_partial_power_loss, 2), '</td>
-                    <td>', round(onetail_diff_total_power_loss, 2), '</td>
-                    </tr>				
+                    <td>', round(onetail_diff_achieved_power_all, 2), '</td>					
+                    </tr>
+
                     <tr>
                     <td class="lastCol leftCol">Treatment mean is not equal to clinical significance level (two-tailed t-test)</td>
                     <td>', conduct_trial_n, '/', simulations(), '</td>
@@ -1559,17 +1671,12 @@ shinyServer(function(input, output) {
                     <td class="lastCol">', round(twotail_clinsig_reject_null_percent, 2), '</td>
                     <td>', twotail_clinsig_reject_null_n, '/', simulations(), '</td>
                     <td class="lastCol">', round(twotail_clinsig_reject_null_all_percent, 2), '</td>
-                    
-                    
                     <td>', twotail_clinsig_reject_null_n_lt_true, '/', twotail_clinsig_reject_null_n, '</td>
                     <td class="lastCol">', round(twotail_clinsig_reject_null_n_lt_true_percent, 2), '</td>
-                    
                     <td>', round(twotail_clinsig_achieved_power_full_trial, 2), '</td>
-                    <td class="lastCol">', round(twotail_clinsig_achieved_power_all, 2), '</td>					
-                    <td>', round(proceed_partial_power_loss, 2), '</td>
-                    <td class="dashedCol">', round(twotail_clinsig_reject_null_partial_power_loss, 2), '</td>
-                    <td>', round(twotail_clinsig_total_power_loss, 2), '</td>
+                    <td>', round(twotail_clinsig_achieved_power_all, 2), '</td>					
                     </tr>
+
                     <tr>
                     <td class="lastCol leftCol">Treatment mean is not equal to clinical significance level (one-tailed t-test)</td>
                     <td>', conduct_trial_n, '/', simulations(), '</td>
@@ -1578,16 +1685,10 @@ shinyServer(function(input, output) {
                     <td class="lastCol">', round(onetail_clinsig_reject_null_percent, 2), '</td>
                     <td>', onetail_clinsig_reject_null_n, '/', simulations(), '</td>
                     <td class="lastCol">', round(onetail_clinsig_reject_null_all_percent, 2), '</td>
-                    
-                    
                     <td>', onetail_clinsig_reject_null_n_lt_true, '/', onetail_clinsig_reject_null_n, '</td>
-                    <td class="lastCol">', round(onetail_clinsig_reject_null_n_lt_true_percent, 2), '</td>
-                    
+                    <td class="lastCol">', round(onetail_clinsig_reject_null_n_lt_true_percent, 2), '</td>                    
                     <td>', round(onetail_clinsig_achieved_power_full_trial, 2), '</td>
-                    <td class="lastCol">', round(onetail_clinsig_achieved_power_all, 2), '</td>					
-                    <td>', round(proceed_partial_power_loss, 2), '</td>
-                    <td class="dashedCol">', round(onetail_clinsig_reject_null_partial_power_loss, 2), '</td>
-                    <td>', round(onetail_clinsig_total_power_loss, 2), '</td>
+                    <td>', round(onetail_clinsig_achieved_power_all, 2), '</td>					
                     </tr>				
                     
                     
@@ -1696,13 +1797,12 @@ shinyServer(function(input, output) {
                     <tr>
                     <td class="headingCol leftCol lastCol"></td>
                     <td class="headingCol lastCol" colspan="2">Over All Simulations, Conduct Full Trial?</td>
-                    <td class="headingCol lastCol" colspan="2">Over Simulations With Full Trial, Reject H<sub>0</sub>/Detect Effect?</td>
-                    <td class="headingCol lastCol" colspan="2">Over All Simulations, Reject H<sub>0</sub>/Detect Effect?</td>
+                    <td class="headingCol lastCol" colspan="2">Over Simulations With Full Trial, Reject H<sub>0</sub>?</td>
+                    <td class="headingCol lastCol" colspan="2">Over All Simulations, Reject H<sub>0</sub>?</td>
                     <td class="headingCol lastCol" colspan="2">Over All Simulations Where Reject H<sub>0</sub>, Overestimate True Effect?</td>
-                    <td class="headingCol lastCol" colspan="2">"Achieved Power" (Probability of Reject H<sub>0</sub>/Detect Effect):</td>
-                    <td class="headingCol dashedCol" colspan="2">Over All Simulations, "Partial" Power Lost By:</td>
-                    <td class="headingCol">Over All Simulations:</td>
+                    <td class="headingCol" colspan="2">"Achieved Power" (Probability of Reject H<sub>0</sub>):</td>
                     </tr>
+
                     <tr>
                     <th class="headingCol leftCol lastCol">Statistical Test</th>
                     <th class="headingCol">n</th>
@@ -1714,11 +1814,9 @@ shinyServer(function(input, output) {
                     <th class="headingCol">n</th>
                     <th class="headingCol lastCol">%</th>
                     <th class="headingCol">Over Simulations With Full Trial</th>
-                    <th class="headingCol lastCol">Over All Simulations</th>					
-                    <th class="headingCol">Not Conducting Trial</th>
-                    <th class="headingCol dashedCol">Not Detecting Effect</th>					
-                    <th class="headingCol">Total Power Loss</th>					
+                    <th class="headingCol">Over All Simulations</th>									
                     </tr>
+
                     <tr>
                     <td class="lastCol leftCol">Treatment mean is not equal to control mean (two-tailed t-test)</td>
                     <td>', conduct_trial_n, '/', simulations(), '</td>
@@ -1727,16 +1825,12 @@ shinyServer(function(input, output) {
                     <td class="lastCol">', round(twotail_diff_reject_null_percent, 2), '</td>
                     <td>', twotail_diff_reject_null_n, '/', simulations(), '</td>
                     <td class="lastCol">', round(twotail_diff_reject_null_all_percent, 2), '</td>
-                    
                     <td>', twotail_diff_reject_null_n_lt_true, '/', twotail_diff_reject_null_n, '</td>
                     <td class="lastCol">', round(twotail_diff_reject_null_n_lt_true_percent, 2), '</td>
-                    
                     <td>', round(twotail_diff_achieved_power_full_trial, 2), '</td>
-                    <td class="lastCol">', round(twotail_diff_achieved_power_all, 2),'</td>
-                    <td>', round(proceed_partial_power_loss, 2), '</td>
-                    <td class="dashedCol">', round(twotail_diff_reject_null_partial_power_loss, 2), '</td>
-                    <td>', round(twotail_diff_total_power_loss, 2), '</td>
+                    <td>', round(twotail_diff_achieved_power_all, 2),'</td>
                     </tr>
+
                     <tr>
                     <td class="lastCol leftCol">Treatment mean is not equal to control mean (one-tailed t-test)</td>
                     <td>', conduct_trial_n, '/', simulations(), '</td>
@@ -1745,20 +1839,12 @@ shinyServer(function(input, output) {
                     <td class="lastCol">', round(onetail_diff_reject_null_percent, 2), '</td>
                     <td>', onetail_diff_reject_null_n, '/', simulations(), '</td>
                     <td class="lastCol">', round(onetail_diff_reject_null_all_percent, 2), '</td>
-                    
-                    
                     <td>', onetail_diff_reject_null_n_lt_true, '/', onetail_diff_reject_null_n, '</td>
                     <td class="lastCol">', round(onetail_diff_reject_null_n_lt_true_percent, 2), '</td>
-                    
-                    
-                    
-                    
                     <td>', round(onetail_diff_achieved_power_full_trial, 2), '</td>
-                    <td class="lastCol">', round(onetail_diff_achieved_power_all, 2), '</td>					
-                    <td>', round(proceed_partial_power_loss, 2), '</td>
-                    <td class="dashedCol">', round(onetail_diff_reject_null_partial_power_loss, 2), '</td>
-                    <td>', round(onetail_diff_total_power_loss, 2), '</td>
+                    <td>', round(onetail_diff_achieved_power_all, 2), '</td>					
                     </tr>				
+
                     <tr>
                     <td class="lastCol leftCol">Treatment mean is not equal to clinical significance level (two-tailed t-test)</td>
                     <td>', conduct_trial_n, '/', simulations(), '</td>
@@ -1767,19 +1853,12 @@ shinyServer(function(input, output) {
                     <td class="lastCol">', round(twotail_clinsig_reject_null_percent, 2), '</td>
                     <td>', twotail_clinsig_reject_null_n, '/', simulations(), '</td>
                     <td class="lastCol">', round(twotail_clinsig_reject_null_all_percent, 2), '</td>
-                    
-                    
                     <td>', twotail_clinsig_reject_null_n_lt_true, '/', twotail_clinsig_reject_null_n, '</td>
                     <td class="lastCol">', round(twotail_clinsig_reject_null_n_lt_true_percent, 2), '</td>
-                    
-                    
-                    
                     <td>', round(twotail_clinsig_achieved_power_full_trial, 2), '</td>
-                    <td class="lastCol">', round(twotail_clinsig_achieved_power_all, 2), '</td>					
-                    <td>', round(proceed_partial_power_loss, 2), '</td>
-                    <td class="dashedCol">', round(twotail_clinsig_reject_null_partial_power_loss, 2), '</td>
-                    <td>', round(twotail_clinsig_total_power_loss, 2), '</td>
+                    <td>', round(twotail_clinsig_achieved_power_all, 2), '</td>					
                     </tr>
+
                     <tr>
                     <td class="lastCol leftCol">Treatment mean is not equal to clinical significance level (one-tailed t-test)</td>
                     <td>', conduct_trial_n, '/', simulations(), '</td>
@@ -1788,18 +1867,10 @@ shinyServer(function(input, output) {
                     <td class="lastCol">', round(onetail_clinsig_reject_null_percent, 2), '</td>
                     <td>', onetail_clinsig_reject_null_n, '/', simulations(), '</td>
                     <td class="lastCol">', round(onetail_clinsig_reject_null_all_percent, 2), '</td>
-                    
                     <td>', onetail_clinsig_reject_null_n_lt_true, '/', onetail_clinsig_reject_null_n, '</td>
                     <td class="lastCol">', round(onetail_clinsig_reject_null_n_lt_true_percent, 2), '</td>
-                    
-                    
-                    
-                    
                     <td>', round(onetail_clinsig_achieved_power_full_trial, 2), '</td>
-                    <td class="lastCol">', round(onetail_clinsig_achieved_power_all, 2), '</td>					
-                    <td>', round(proceed_partial_power_loss, 2), '</td>
-                    <td class="dashedCol">', round(onetail_clinsig_reject_null_partial_power_loss, 2), '</td>
-                    <td>', round(onetail_clinsig_total_power_loss, 2), '</td>
+                    <td>', round(onetail_clinsig_achieved_power_all, 2), '</td>					
                     </tr>				
                     
                     
@@ -1824,7 +1895,7 @@ shinyServer(function(input, output) {
   ###################################################	
   ### Show all results and allow for data download
   ###################################################
-  
+
   # Pilot Simulation
   output$downloadPilotData <- downloadHandler(
     filename = function() { paste('pilot_data', Sys.Date(), '.csv', sep='') },
