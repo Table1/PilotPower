@@ -13,13 +13,13 @@ shinyServer(function(input, output, session) {
     # Compose data frame
     data.frame(
       Name = c("True Effect Size", 
-               "Clinically Significant Effect Size",
+               "Practically Significant Effect Size",
                "Pilot Study Sample Size",
                "Significance Level",
                "Power Level",
                "Number of Simulations"),
       Value = as.character(c(input$true_effect_size, 
-                             input$clinical_effect_size,
+                             input$practical_effect_size,
                              input$sample_size,
                              input$alpha,
                              input$power,
@@ -29,6 +29,16 @@ shinyServer(function(input, output, session) {
   
   output$settings <- renderTable({
     inputValues()
+  })
+  
+  # selected tab
+  
+  selected_tab <- reactive({
+    input$tabID
+  })
+  
+  output$selected_tab <- renderText({
+    selected_tab()
   })
   
   # Update status: only update simulation variables for a second time after update button is pressed
@@ -71,13 +81,13 @@ shinyServer(function(input, output, session) {
     }))
   })
   
-  clinical_level <- reactive({
+  practical_level <- reactive({
     if(update() != last_update()){
       return(NULL)
     }
     
     return(isolate({    
-      input$clinical_effect_size
+      input$practical_effect_size
     }))
   })
   
@@ -178,7 +188,7 @@ shinyServer(function(input, output, session) {
       tTwoSampleOneTail[i] <- tTestTwoSampleOneTail$statistic
       pTwoSampleOneTail[i] <- tTestTwoSampleOneTail$p.value
       
-      # t-test, one sample clinical significance comparison, two-tailed
+      # t-test, one sample practical significance comparison, two-tailed
       tTestClinSigTwoTail <- t.test(x=tx, mu=clinSig, alternative="two.sided", var.equal = TRUE, conf.level = alpha)
       tClinSigTwoTail[i] <- tTestClinSigTwoTail$statistic
       pClinSigTwoTail[i] <- tTestClinSigTwoTail$p.value
@@ -202,13 +212,13 @@ shinyServer(function(input, output, session) {
   
   
   output$pilotStudyNotice <- renderText({
-    paste('For each of the ', simulations(), ' simulations, we draw ', sample_size()/2, ' treatment outcomes each from a normal distrbution with a mean of ', true_effect_size(), 'and a standard deviation of 1. We repeat this process for the control outcomes, but set the normal distribution mean to 0. Effect sizes for each simulation are calculated by subtracting the treatment mean from the control mean.<br><br>', sep='')
+    paste('For each of the ', simulations(), ' simulations, we draw ', sample_size()/2, ' treatment outcomes each from a normal distrbution with a mean of ', true_effect_size(), ' and a standard deviation of 1. We repeat this process for the control outcomes, but set the normal distribution mean to 0. Effect sizes for each simulation are calculated by subtracting the treatment mean from the control mean.<br><br>', sep='')
   })	
   
   ## Reactive variables
   # Results
   pilotResults <- reactive({
-    results <- simulatePilots(sample_size(), true_effect_size(), alpha(), power(), clinical_level(), simulations())
+    results <- simulatePilots(sample_size(), true_effect_size(), alpha(), power(), practical_level(), simulations())
     return(results)
   })
   
@@ -365,7 +375,7 @@ shinyServer(function(input, output, session) {
   
   # Compare to clin sig	
   pointEstimateClinSigCount <- reactive({
-    return(sum(pilotResults()$effect_size > clinical_level()))
+    return(sum(pilotResults()$effect_size > practical_level()))
   })
   
   pointEstimateClinSigPercent <- reactive({
@@ -418,11 +428,11 @@ shinyServer(function(input, output, session) {
     # Compose data frame
     data.frame(
       Proceed = c("If effect size point estimate is greater than 0",
-                  "If effect size point estimate is greater than clinically significant effect size",
+                  "If effect size point estimate is greater than practically significant effect size",
                   "If treatment mean greater than control mean (one-tailed t-test)",
                   "If treatment mean not equal to control mean (two-tailed t-test)",
-                  "If treatment mean greater than clinically significant effect size (one-tailed t-test)",
-                  "If treatment mean not equal to clinically significant effect size (two-tailed t-test)",
+                  "If treatment mean greater than practically significant effect size (one-tailed t-test)",
+                  "If treatment mean not equal to practically significant effect size (two-tailed t-test)",
                   "Always"						
       ),
       Percent = as.character(c(pointEstimateZeroPercent(),
@@ -443,18 +453,18 @@ shinyServer(function(input, output, session) {
   
   generateProceedMethodDescription <- function(proceedMethod){
 
-    if(proceedMethod == "pointestimate_clinical"){
-      description <- c('proceed to a full trial whenever the pilot study effect size point estimate is greater than the clinically significant effect size.')
+    if(proceedMethod == "pointestimate_practical"){
+      description <- c('proceed to a full trial whenever the pilot study effect size point estimate is greater than the practically significant effect size.')
     } else if(proceedMethod == "pointestimate_zero"){
       description <- c('proceed to a full trial whenever the pilot study effect size point estimate is greater than 0.')
     } else if(proceedMethod == "ttest_twotail"){
       description <- c('proceed to a full trial whenever the pilot study effect size is statistically significantly different from 0.')
     } else if(proceedMethod == "ttest_onetail"){
       description <- c('proceed to a full trial whenever the pilot study effect size is statistically significantly greater than 0.')
-    } else if(proceedMethod == "ttest_clinical_twotail"){
-      description <- c('proceed to a full trial whenever the pilot study effect size is statistically significantly different from  the clinically significant effect size.')
-    } else if(proceedMethod == "ttest_clinical_onetail"){
-      description <- c('proceed to a full trial whenever the pilot study effect size is statistically significantly greater than  the clinically significant effect size.')
+    } else if(proceedMethod == "ttest_practical_twotail"){
+      description <- c('proceed to a full trial whenever the pilot study effect size is statistically significantly different from  the practically significant effect size.')
+    } else if(proceedMethod == "ttest_practical_onetail"){
+      description <- c('proceed to a full trial whenever the pilot study effect size is statistically significantly greater than  the practically significant effect size.')
     } else if(proceedMethod == 'always'){
       description <- 'proceed to a full trial regardless of the pilot study effect size.'
     }
@@ -487,7 +497,7 @@ shinyServer(function(input, output, session) {
     paste('<br>Power calculations are based upon two-taileded tests where power (1 - &beta;) = ', power(), '.<br><br>', sep='')
   })	
   
-  # Calculate power needed to detect clinical significance
+  # Calculate power needed to detect practical significance
   calculatePower <- function(effect_size, alpha, power){
     group_size <- power.t.test(n=NULL, effect_size, sd=1, sig.level=alpha, power=power,
                                type="two.sample", alternative="two.sided")$n	
@@ -500,7 +510,7 @@ shinyServer(function(input, output, session) {
   }
   
   clinSigTrialSampleSize <- reactive({
-    calculatePower(clinical_level(), alpha(), power())
+    calculatePower(practical_level(), alpha(), power())
   })
   
   pilotStudyPowerCalculation <- function(data, alpha, power, proceedMethod, clinSig, totalSim, limit){
@@ -516,7 +526,7 @@ shinyServer(function(input, output, session) {
       
       proceed <- 0		
       
-      if(proceedMethod == "pointestimate_clinical"){
+      if(proceedMethod == "pointestimate_practical"){
         pilotEffectSize = pilotRow$effect_size			
         ifelse(pilotEffectSize > clinSig, proceed <- 1, NA)
       } else if(proceedMethod == "pointestimate_zero"){
@@ -528,10 +538,10 @@ shinyServer(function(input, output, session) {
       } else if(proceedMethod == "ttest_onetail"){
         p_two_sampleone_tail = pilotRow$p_two_sample_one_tail
         ifelse(p_two_sampleone_tail < alpha, proceed <- 1, NA)
-      } else if(proceedMethod == "ttest_clinical_twotail"){
+      } else if(proceedMethod == "ttest_practical_twotail"){
         p_clin_sig_two_tail = pilotRow$p_clin_sig_two_tail
         ifelse(p_clin_sig_two_tail < alpha, proceed <- 1, NA)
-      } else if(proceedMethod == "ttest_clinical_onetail"){
+      } else if(proceedMethod == "ttest_practical_onetail"){
         p_clin_sig_one_tail = pilotRow$p_clin_sig_one_tail
         ifelse(p_clin_sig_one_tail < alpha, proceed <- 1, NA)
       } else if(proceedMethod == "always"){
@@ -541,7 +551,7 @@ shinyServer(function(input, output, session) {
       if(proceed == 1){
         effect_size <- pilotRow$effect_size
         
-        # no interest in detecting less than clinical effect size, so if less, set row effect size to clinical effect size
+        # no interest in detecting less than practical effect size, so if less, set row effect size to practical effect size
         if(proceedMethod == 'always'){
           ifelse(effect_size < clinSig, effect_size <- clinSig, NA)
         } else if (proceedMethod == 'pointestimate_zero'){
@@ -573,7 +583,7 @@ shinyServer(function(input, output, session) {
   }
   
   sampleSizes <- reactive({
-    pilotStudyPowerCalculation(pilotResults(), alpha(), power(), proceedMethod(), clinical_level(), simulations(), clinSigTrialSampleSize())
+    pilotStudyPowerCalculation(pilotResults(), alpha(), power(), proceedMethod(), practical_level(), simulations(), clinSigTrialSampleSize())
   })
   
   meanSampleSize <- reactive({
@@ -584,19 +594,19 @@ shinyServer(function(input, output, session) {
     round(sd(sampleSizes(), na.rm = TRUE), 2)
   })
   
-  clinicalSamplePilotSampleDifference <- reactive({
+  practicalSamplePilotSampleDifference <- reactive({
     round(clinSigTrialSampleSize() - meanSampleSize(), 2)
   })
   
   output$apparentCasesSaved <- renderText({
-    paste('When calculating full trial sample sizes to detect the observed pilot study effect size, on mean you sample <strong>', clinicalSamplePilotSampleDifference() ,'</strong> fewer cases per simulation than had you calculated the full trial sample size to detect the clinically significant effect size.<br><br>', sep='')
+    paste('When calculating full trial sample sizes to detect the observed pilot study effect size, on mean you sample <strong>', practicalSamplePilotSampleDifference() ,'</strong> fewer cases per simulation than had you calculated the full trial sample size to detect the practically significant effect size.<br><br>', sep='')
   })
   
   
   powerStats <- reactive({	
     # Compose data frame
     data.frame(
-      Calculation = c("Sample size needed to detect clinically significant effect size",
+      Calculation = c("Sample size needed to detect practically significant effect size",
                       "Across simulations, mean sample size needed to detect pilot study effect size",
                       "Across simulations, minimum sample needed to detect pilot study effect size",
                       "Across simulations, maximum sample needed to detect pilot study effect size",						
@@ -615,17 +625,17 @@ shinyServer(function(input, output, session) {
     powerStats()
   })
   
-  # how often pilot study smaller than clinically significant
+  # how often pilot study smaller than practically significant
   numberCasesPilotESLessThanCSES <- reactive({
-    round((sum(pilotResults()$effect_size < clinical_level())/proceedCount())*100, 2)
+    round((sum(pilotResults()$effect_size < practical_level())/proceedCount())*100, 2)
   })
   
   proceedAlwaysNote <- function(currentProceedMethod){
     proceedNote <- ''
     if(currentProceedMethod == 'always'){
-      proceedNote <- paste('<strong>Alert:</strong> You chose to always proceed to trial regardless of the pilot study effect size. In these cases, the pilot study effect size is sometimes smaller than the clinically significant effect size. When this is the case, power calculations are done with the clinically significant effect size. For example, if a draw in the simulation results in a pilot study effect size of 0.08, and the clinically significant effect size is 0.20, the power calculation is done to allow detection of the clinically significant effect size of 0.20.<br><br>In this simulation, this occurs in <strong>', numberCasesPilotESLessThanCSES(), '%</strong> of the pilot studies simulated.', sep='')
+      proceedNote <- paste('<strong>Alert:</strong> You chose to always proceed to trial regardless of the pilot study effect size. In these cases, the pilot study effect size is sometimes smaller than the practically significant effect size. When this is the case, power calculations are done with the practically significant effect size. For example, if a draw in the simulation results in a pilot study effect size of 0.08, and the practically significant effect size is 0.20, the power calculation is done to allow detection of the practically significant effect size of 0.20.<br><br>In this simulation, this occurs in <strong>', numberCasesPilotESLessThanCSES(), '%</strong> of the pilot studies simulated.', sep='')
     } else if (currentProceedMethod == 'pointestimate_zero') {
-      proceedNote <- paste('<strong>Alert:</strong> You chose to always proceed to trial whenever the point estimate is greater than zero. In these cases, the pilot study effect size is often smaller than the clinically significant effect size. When this is the case, power calculations are done with the clinically significant effect size. For example, if a draw in the simulation results in a pilot study effect size of 0.08, and the clinically significant effect size is 0.20, the power calculation is done to allow detection of the clinically significant effect size of 0.20.<br><br>In this simulation, this occurs in <strong>', numberCasesPilotESLessThanCSES(), '%</strong> of the cases in which the pilot study effect size is large enough to proceed to a full trial.', sep='')
+      proceedNote <- paste('<strong>Alert:</strong> You chose to always proceed to trial whenever the point estimate is greater than zero. In these cases, the pilot study effect size is often smaller than the practically significant effect size. When this is the case, power calculations are done with the practically significant effect size. For example, if a draw in the simulation results in a pilot study effect size of 0.08, and the practically significant effect size is 0.20, the power calculation is done to allow detection of the practically significant effect size of 0.20.<br><br>In this simulation, this occurs in <strong>', numberCasesPilotESLessThanCSES(), '%</strong> of the cases in which the pilot study effect size is large enough to proceed to a full trial.', sep='')
     }
     return(proceedNote)
   }
@@ -655,7 +665,7 @@ shinyServer(function(input, output, session) {
          main = 'Smoothed Distribution of Sample Sizes Calculated Using Observed Pilot Study Effect Size', 
          panel.first = grid())
     
-    abline(v=clinSigTrialSampleSize()) # clinical significance
+    abline(v=clinSigTrialSampleSize()) # practical significance
     abline(v=min(sampleSizes(), na.rm=TRUE), lty = 3,col = "darkred") # minimum
     abline(v=max(sampleSizes(), na.rm=TRUE), lty = 3, col = "darkred") # maximum
     abline(v=meanSampleSize(),lty=2)
@@ -664,7 +674,7 @@ shinyServer(function(input, output, session) {
     
     par(mar=c(0, 0, 0, 0))
     plot.new()
-    legend('center',c('Mean Sample Size','Clinically Significant Sample Size','Minimum/Maximum Calculated Sample Sizes'),
+    legend('center',c('Mean Sample Size','Practically Significant Sample Size','Minimum/Maximum Calculated Sample Sizes'),
            lty = c(2, 1, 3), col=c(1,1,'darkred'), bty = 'n')
   })
   
@@ -680,7 +690,7 @@ shinyServer(function(input, output, session) {
          main = 'Smoothed Distribution of Sample Sizes Calculated Using Observed Pilot Study Effect Size', 
          panel.first = grid())
     
-    abline(v=clinSigTrialSampleSize()) # clinical significance
+    abline(v=clinSigTrialSampleSize()) # practical significance
     abline(v=min(sampleSizes(), na.rm=TRUE), lty = 3,col = "darkred") # minimum
     abline(v=max(sampleSizes(), na.rm=TRUE), lty = 3, col = "darkred") # maximum
     abline(v=meanSampleSize(),lty=2)
@@ -689,7 +699,7 @@ shinyServer(function(input, output, session) {
     
     par(mar=c(0, 0, 0, 0))
     plot.new()
-    legend('center',c('Mean Sample Size','Clinically Significant Sample Size','Minimum/Maximum Calculated Sample Sizes'),
+    legend('center',c('Mean Sample Size','Practically Significant Sample Size','Minimum/Maximum Calculated Sample Sizes'),
            lty = c(2, 1, 3), col=c(1,1,'darkred'), bty = 'n')
   })
   
@@ -700,7 +710,7 @@ shinyServer(function(input, output, session) {
          main = 'Smoothed Distribution of Sample Sizes Calculated Using Observed Pilot Study Effect Size', 
          panel.first = grid())
     
-    abline(v=clinSigTrialSampleSize()) # clinical significance
+    abline(v=clinSigTrialSampleSize()) # practical significance
     abline(v=min(sampleSizes(), na.rm=TRUE), lty = 3,col = "darkred") # minimum
     abline(v=max(sampleSizes(), na.rm=TRUE), lty = 3, col = "darkred") # maximum
     abline(v=meanSampleSize(),lty=2)
@@ -709,7 +719,7 @@ shinyServer(function(input, output, session) {
     
     par(mar=c(0, 0, 0, 0))
     plot.new()
-    legend('center',c('Mean Sample Size','Clinically Significant Sample Size','Minimum/Maximum Calculated Sample Sizes'),
+    legend('center',c('Mean Sample Size','Practically Significant Sample Size','Minimum/Maximum Calculated Sample Sizes'),
            lty = c(2, 1, 3), col=c(1,1,'darkred'), bty = 'n')    
   })
   
@@ -720,7 +730,7 @@ shinyServer(function(input, output, session) {
          main = 'Smoothed Distribution of Sample Sizes Calculated Using Observed Pilot Study Effect Size', 
          panel.first = grid())
     
-    abline(v=clinSigTrialSampleSize()) # clinical significance
+    abline(v=clinSigTrialSampleSize()) # practical significance
     abline(v=min(sampleSizes(), na.rm=TRUE), lty = 3) # minimum
     abline(v=max(sampleSizes(), na.rm=TRUE), lty = 3) # maximum
     abline(v=meanSampleSize(),lty=2)
@@ -729,7 +739,7 @@ shinyServer(function(input, output, session) {
     
     par(mar=c(0, 0, 0, 0))
     plot.new()
-    legend('center',c('Mean Sample Size','Clinically Significant Sample Size','Minimum/Maximum Calculated Sample Sizes'),
+    legend('center',c('Mean Sample Size','Practically Significant Sample Size','Minimum/Maximum Calculated Sample Sizes'),
            lty = c(2, 1, 3), col=c(1,1,1), bty = 'n')  
   })  
   
@@ -818,7 +828,7 @@ shinyServer(function(input, output, session) {
       
       proceed <- 0		
       
-      if(proceedMethod == "pointestimate_clinical"){
+      if(proceedMethod == "pointestimate_practical"){
         pilotEffectSize = pilotRow$effect_size			
         ifelse(pilotEffectSize > clinSig, proceed <- 1, NA)
       } else if(proceedMethod == "pointestimate_zero"){
@@ -830,10 +840,10 @@ shinyServer(function(input, output, session) {
       } else if(proceedMethod == "ttest_onetail"){
         p_two_sampleone_tail = pilotRow$p_two_sample_one_tail
         ifelse(p_two_sampleone_tail < alpha, proceed <- 1, NA)
-      } else if(proceedMethod == "ttest_clinical_twotail"){
+      } else if(proceedMethod == "ttest_practical_twotail"){
         p_clin_sig_two_tail = pilotRow$p_clin_sig_two_tail
         ifelse(p_clin_sig_two_tail < alpha, proceed <- 1, NA)
-      } else if(proceedMethod == "ttest_clinical_onetail"){
+      } else if(proceedMethod == "ttest_practical_onetail"){
         p_clin_sig_one_tail = pilotRow$p_clin_sig_one_tail
         ifelse(p_clin_sig_one_tail < alpha, proceed <- 1, NA)
       } else if(proceedMethod == "always"){
@@ -867,7 +877,7 @@ shinyServer(function(input, output, session) {
         tTwoSampleOneTail[i] <- tTestTwoSampleOneTail$statistic
         pTwoSampleOneTail[i] <- tTestTwoSampleOneTail$p.value
         
-        # t-test, one sample clinical significance comparison, two-tailed
+        # t-test, one sample practical significance comparison, two-tailed
         tTestClinSigTwoTail <- t.test(x=tx, mu=clinSig, alternative="two.sided", var.equal = TRUE, conf.level = alpha)
         tClinSigTwoTail[i] <- tTestClinSigTwoTail$statistic
         pClinSigTwoTail[i] <- tTestClinSigTwoTail$p.value
@@ -894,7 +904,7 @@ shinyServer(function(input, output, session) {
   
   # get a data frame of simulated data for all trials	 when using pilot study effect sizes
   trialResults <- reactive({
-    simulateFullTrial(pilotResults(), sampleSizes(), true_effect_size(), alpha(), proceedMethod(), clinical_level(), simulations())
+    simulateFullTrial(pilotResults(), sampleSizes(), true_effect_size(), alpha(), proceedMethod(), practical_level(), simulations())
   })
   
   proceedCount <- reactive({
@@ -1121,9 +1131,9 @@ shinyServer(function(input, output, session) {
   
   
   ## No Pilot Study
-  # repeat, but only use clinically significant calculated sample size
+  # repeat, but only use practically significant calculated sample size
   noPilotTrialResults <- reactive({
-    simulateFullTrial(pilotResults(), clinSigTrialSampleSize(), true_effect_size(), alpha(), proceedMethod(), clinical_level(), simulations())
+    simulateFullTrial(pilotResults(), clinSigTrialSampleSize(), true_effect_size(), alpha(), proceedMethod(), practical_level(), simulations())
   })	
   
   # No Pilot Full Trial Statistics
@@ -1340,8 +1350,9 @@ shinyServer(function(input, output, session) {
     round((noPilotFullTrialTClinSigOneTailCountGTTrueEffect()/noPilotFullTrialTClinSigOneTailCount())*100, 2)
   })  
   
-  
+  ###################################################  
   ### STEP 5.  Interpret results
+  ###################################################
   
   output$proceedCountFullTrialNotice <- renderText({
     paste('<strong>Note:</strong> ', proceedMethodDescription(), ' Consequently, we would proceed to trial in <strong>', proceedCount() , '</strong> of the <strong>', simulations(), '</strong> simulations conducted, or <strong>', round((proceedCount()/simulations())*100, 2) ,'%</strong> of them. The below conclusions are thus made for only those ', proceedCount(), ' cases.<br><br>', sep='')
@@ -1353,8 +1364,8 @@ shinyServer(function(input, output, session) {
     data.frame(
       Inference = c("Reject Null Hypothesis: Full trial treatment mean is not equal to control mean (two-tailed t-test)",
                     "Reject Null Hypothesis: Full trial treatment mean greater than control mean (one-tailed t-test)",
-                    "Reject Null Hypothesis: Full trial treatment mean not equal to clinically significant effect size (two-tailed t-test)",
-                    "Reject Null Hypothesis: Full trial treatment mean greater than clinically significant effect size (one-tailed t-test)"						
+                    "Reject Null Hypothesis: Full trial treatment mean not equal to practically significant effect size (two-tailed t-test)",
+                    "Reject Null Hypothesis: Full trial treatment mean greater than practically significant effect size (one-tailed t-test)"						
       ),
       Percent = as.character(c(FullTrialTTwoSampleTwoTailPercent(),
                                FullTrialTTwoSampleOneTailPercent(),
@@ -1374,8 +1385,8 @@ shinyServer(function(input, output, session) {
     data.frame(
       Inference = c("Reject Null Hypothesis: Full trial treatment mean is not equal to control mean (two-tailed t-test)",
                     "Reject Null Hypothesis: Full trial treatment mean greater than control mean (one-tailed t-test)",
-                    "Reject Null Hypothesis: Full trial treatment mean not equal to clinically significant effect size (two-tailed t-test)",
-                    "Reject Null Hypothesis: Full trial treatment mean greater than clinically significant effect size (one-tailed t-test)"						
+                    "Reject Null Hypothesis: Full trial treatment mean not equal to practically significant effect size (two-tailed t-test)",
+                    "Reject Null Hypothesis: Full trial treatment mean greater than practically significant effect size (one-tailed t-test)"						
       ),
       Percent = as.character(c(noPilotFullTrialTTwoSampleTwoTailPercent(),
                                noPilotFullTrialTTwoSampleOneTailPercent(),
@@ -1393,10 +1404,10 @@ shinyServer(function(input, output, session) {
   
   # Decision to Proceed to Trial
   
-  testForProceed <- function (true_effect_size, clinical_effect_size){
-    if(true_effect_size > clinical_effect_size){
+  testForProceed <- function (true_effect_size, practical_effect_size){
+    if(true_effect_size > practical_effect_size){
       shouldProceed <- 1	
-    } else if(true_effect_size == clinical_effect_size){
+    } else if(true_effect_size == practical_effect_size){
       shouldProceed <- 2
     } else {
       shouldProceed <- 0
@@ -1406,26 +1417,26 @@ shinyServer(function(input, output, session) {
   }
   
   shouldProceed <- reactive({
-    testForProceed(true_effect_size(), clinical_level())
+    testForProceed(true_effect_size(), practical_level())
   })
   
-  bestPracticeNotice <- function(should_proceed, true_effect_size, clinical_effect_size){
+  bestPracticeNotice <- function(should_proceed, true_effect_size, practical_effect_size){
     if(should_proceed == 1){
-      message <- paste('Because the true effect size of <strong>', true_effect_size, '</strong> is <strong>greater than</strong> the clinically significant effect size of <strong>', clinical_effect_size, '</strong>, it is <span class="correct">correct</span> to conduct a full to trial.<br><br>', sep='')
+      message <- paste('Because the true effect size of <strong>', true_effect_size, '</strong> is <strong>greater than</strong> the practically significant effect size of <strong>', practical_effect_size, '</strong>, it is <span class="correct">correct</span> to conduct a full to trial.<br><br>', sep='')
     } else if(should_proceed == 2){
-      message <- paste('Because the true effect size of <strong>', true_effect_size, '</strong> is <strong>equal to</strong> the clinically significant effect size of <strong>', clinical_effect_size, '</strong>, it is <span class="correct">correct</span> to conduct a full trial.<br><br>', sep='')		
+      message <- paste('Because the true effect size of <strong>', true_effect_size, '</strong> is <strong>equal to</strong> the practically significant effect size of <strong>', practical_effect_size, '</strong>, it is <span class="correct">correct</span> to conduct a full trial.<br><br>', sep='')		
     } else {
-      message <- paste('Because the true effect size of <strong>', true_effect_size, '</strong> is <strong>less than</strong> the clinically significant effect size of <strong>', clinical_effect_size, '</strong>, it is <span  class="incorrect">incorrect</span> to conduct a full trial.<br><br>', sep='')
+      message <- paste('Because the true effect size of <strong>', true_effect_size, '</strong> is <strong>less than</strong> the practically significant effect size of <strong>', practical_effect_size, '</strong>, it is <span  class="incorrect">incorrect</span> to conduct a full trial.<br><br>', sep='')
     }
     
     return(message)
   }
   
   output$bestPractice <- renderText({
-    bestPracticeNotice(shouldProceed(), true_effect_size(), clinical_level())
+    bestPracticeNotice(shouldProceed(), true_effect_size(), practical_level())
   })
   
-  yourChoiceNotice <- function(should_proceed, true_effect_size, clinical_effect_size){
+  yourChoiceNotice <- function(should_proceed, true_effect_size, practical_effect_size){
     if(should_proceed == 1 | should_proceed == 2){
       message <- 	paste(proceedMethodDescription(), ' Consequently, you would <span class="correct">correctly</span> proceed to trial in <strong>', proceedCount() , '</strong> of the <strong>', simulations(), '</strong> simulations conducted, or <strong>', round((proceedCount()/simulations())*100, 2) ,'%</strong> of them. This means you <span class="incorrect">incorrectly</span> did not conduct a full trial in <strong>', simulations() - proceedCount(), '</strong> of <strong>', simulations(), '</strong> simulations, or <strong>', round(((simulations() - proceedCount())/simulations())*100, 2) ,'%</strong> of the time.<br><br>', sep='')
     } else {
@@ -1436,17 +1447,17 @@ shinyServer(function(input, output, session) {
   }
   
   output$yourChoice <- renderText({
-    yourChoiceNotice(shouldProceed(), true_effect_size(), clinical_level())
+    yourChoiceNotice(shouldProceed(), true_effect_size(), practical_level())
   })	
   
   generateImplicationsProceedStats <- function(shouldProceed){
     rules <- c(
       "Proceed if effect size point estimate is greater than 0",
-      "Proceed if effect size point estimate is greater than clinically significant effect size",
+      "Proceed if effect size point estimate is greater than practically significant effect size",
       "Proceed if treatment mean greater than control mean (one-tailed t-test)",						
       "Proceed if treatment mean not equal to control mean (two-tailed t-test)",
-      "Proceed if treatment mean greater than clinically significant effect size (one-tailed t-test)",
-      "Proceed if treatment mean not equal to clinically significant effect size (two-tailed t-test)",
+      "Proceed if treatment mean greater than practically significant effect size (one-tailed t-test)",
+      "Proceed if treatment mean not equal to practically significant effect size (two-tailed t-test)",
       "Proceed always"						
     )
     
@@ -1527,9 +1538,9 @@ shinyServer(function(input, output, session) {
   ## Power Loss Summary calculations
   
   # to detect pilot study effect size
-  tradeoffTable <- function(true_effect, clinical_effect, simulations_count, proceed_count, proceed_method){
+  tradeoffTable <- function(true_effect, practical_effect, simulations_count, proceed_count, proceed_method){
     
-    if(proceed_method == "pointestimate_clinical"){
+    if(proceed_method == "pointestimate_practical"){
       conduct_trial_n <- pointEstimateClinSigCount()
       conduct_trial_percent <- pointEstimateClinSigPercent()
     } else if(proceed_method == "pointestimate_zero"){
@@ -1541,10 +1552,10 @@ shinyServer(function(input, output, session) {
     } else if(proceed_method == "ttest_onetail"){
       conduct_trial_n <- tTwoSampleOneTailCount()
       conduct_trial_percent <- tTwoSampleOneTailPercent()
-    } else if(proceed_method == "ttest_clinical_twotail"){
+    } else if(proceed_method == "ttest_practical_twotail"){
       conduct_trial_n <- tClinSigTwoTailCount()
       conduct_trial_percent <- tClinSigTwoTailPercent()
-    } else if(proceed_method == "ttest_clinical_onetail"){
+    } else if(proceed_method == "ttest_practical_onetail"){
       conduct_trial_n <- tClinSigOneTailCount()
       conduct_trial_percent <- tClinSigOneTailPercent()
     } else if(proceed_method == 'always'){
@@ -1607,7 +1618,7 @@ shinyServer(function(input, output, session) {
     
     #Treatment mean is not equal to control mean (two-tailed t-test)
     
-    if(true_effect >= clinical_effect || true_effect < clinical_effect){
+    if(true_effect >= practical_effect || true_effect < practical_effect){
       # should proceed to trial, effect exists
       
       HTML <- paste('<br><br>
@@ -1664,7 +1675,7 @@ shinyServer(function(input, output, session) {
                     </tr>
 
                     <tr>
-                    <td class="lastCol leftCol">Treatment mean is not equal to clinical significance level (two-tailed t-test)</td>
+                    <td class="lastCol leftCol">Treatment mean is not equal to practical significance level (two-tailed t-test)</td>
                     <td>', conduct_trial_n, '/', simulations(), '</td>
                     <td class="lastCol">', round(conduct_trial_percent, 2), '</td>
                     <td>', twotail_clinsig_reject_null_n, '/', proceedCount(), '</td>
@@ -1678,7 +1689,7 @@ shinyServer(function(input, output, session) {
                     </tr>
 
                     <tr>
-                    <td class="lastCol leftCol">Treatment mean is not equal to clinical significance level (one-tailed t-test)</td>
+                    <td class="lastCol leftCol">Treatment mean is not equal to practical significance level (one-tailed t-test)</td>
                     <td>', conduct_trial_n, '/', simulations(), '</td>
                     <td class="lastCol">', round(conduct_trial_percent, 2), '</td>
                     <td>', onetail_clinsig_reject_null_n, '/', proceedCount(), '</td>
@@ -1696,24 +1707,24 @@ shinyServer(function(input, output, session) {
                     ', sep='')
     } else {
       # should not proceed to trial, no effect
-      HTML <- '<strong>Note:</strong> You have set the true effect size lower than the clinically significant effect size. Since we are only interested in detecting effect sizes greater than or equal to the clinically significant effect size, we do not here quantify power loss. Any detection of an effect greater than or equal to the clinically significant effect size would reflect a Type 1 Error, or false positive, vis-a-vis clinical significance.'
+      HTML <- '<strong>Note:</strong> You have set the true effect size lower than the practically significant effect size. Since we are only interested in detecting effect sizes greater than or equal to the practically significant effect size, we do not here quantify power loss. Any detection of an effect greater than or equal to the practically significant effect size would reflect a Type 1 Error, or false positive, vis-a-vis practical significance.'
     }
     
     return(HTML)
   }
   
   tradeoffTableOutput <- reactive({
-    tradeoffTable(true_effect_size(), clinical_level(), simulations(), proceedCount(), proceedMethod())
+    tradeoffTable(true_effect_size(), practical_level(), simulations(), proceedCount(), proceedMethod())
   })
   
   output$tradeoffTable <- renderText({
     tradeoffTableOutput()
   })
   
-  # to detect clinically significant effect size
-  tradeoffTableNoPilot <- function(true_effect, clinical_effect, simulations_count, proceed_count, proceed_method){
+  # to detect practically significant effect size
+  tradeoffTableNoPilot <- function(true_effect, practical_effect, simulations_count, proceed_count, proceed_method){
     
-    if(proceed_method == "pointestimate_clinical"){
+    if(proceed_method == "pointestimate_practical"){
       conduct_trial_n <- pointEstimateClinSigCount()
       conduct_trial_percent <- pointEstimateClinSigPercent()
     } else if(proceed_method == "pointestimate_zero"){
@@ -1725,10 +1736,10 @@ shinyServer(function(input, output, session) {
     } else if(proceed_method == "ttest_onetail"){
       conduct_trial_n <- tTwoSampleOneTailCount()
       conduct_trial_percent <- tTwoSampleOneTailPercent()
-    } else if(proceed_method == "ttest_clinical_twotail"){
+    } else if(proceed_method == "ttest_practical_twotail"){
       conduct_trial_n <- tClinSigTwoTailCount()
       conduct_trial_percent <- tClinSigTwoTailPercent()
-    } else if(proceed_method == "ttest_clinical_onetail"){
+    } else if(proceed_method == "ttest_practical_onetail"){
       conduct_trial_n <- tClinSigOneTailCount()
       conduct_trial_percent <- tClinSigOneTailPercent()
     } else if(proceed_method == 'always'){
@@ -1788,7 +1799,7 @@ shinyServer(function(input, output, session) {
     
     #Treatment mean is not equal to control mean (two-tailed t-test)
     
-    if(true_effect >= clinical_effect || true_effect < clinical_effect){
+    if(true_effect >= practical_effect || true_effect < practical_effect){
       # should proceed to trial, effect exists
       
       HTML <- paste('<br><br>
@@ -1846,7 +1857,7 @@ shinyServer(function(input, output, session) {
                     </tr>				
 
                     <tr>
-                    <td class="lastCol leftCol">Treatment mean is not equal to clinical significance level (two-tailed t-test)</td>
+                    <td class="lastCol leftCol">Treatment mean is not equal to practical significance level (two-tailed t-test)</td>
                     <td>', conduct_trial_n, '/', simulations(), '</td>
                     <td class="lastCol">', round(conduct_trial_percent, 2), '</td>
                     <td>', twotail_clinsig_reject_null_n, '/', proceedCount(), '</td>
@@ -1860,7 +1871,7 @@ shinyServer(function(input, output, session) {
                     </tr>
 
                     <tr>
-                    <td class="lastCol leftCol">Treatment mean is not equal to clinical significance level (one-tailed t-test)</td>
+                    <td class="lastCol leftCol">Treatment mean is not equal to practical significance level (one-tailed t-test)</td>
                     <td>', conduct_trial_n, '/', simulations(), '</td>
                     <td class="lastCol">', round(conduct_trial_percent, 2), '</td>
                     <td>', onetail_clinsig_reject_null_n, '/', proceedCount(), '</td>
@@ -1878,14 +1889,14 @@ shinyServer(function(input, output, session) {
                     ', sep='')
     } else {
       # should not proceed to trial, no effect
-      HTML <- '<strong>Note:</strong> You have set the true effect size lower than the clinically significant effect size. Since we are only interested in detecting effect sizes greater than or equal to the clinically significant effect size, we do not here quantify power loss. Any detection of an effect greater than or equal to the clinically significant effect size would reflect a Type 1 Error, or false positive, vis-a-vis clinical significance.'
+      HTML <- '<strong>Note:</strong> You have set the true effect size lower than the practically significant effect size. Since we are only interested in detecting effect sizes greater than or equal to the practically significant effect size, we do not here quantify power loss. Any detection of an effect greater than or equal to the practically significant effect size would reflect a Type 1 Error, or false positive, vis-a-vis practical significance.'
     }
     
     return(HTML)
   }
   
   tradeoffTableOutputNoPilot <- reactive({
-    tradeoffTableNoPilot(true_effect_size(), clinical_level(), simulations(), proceedCount(), proceedMethod())
+    tradeoffTableNoPilot(true_effect_size(), practical_level(), simulations(), proceedCount(), proceedMethod())
   })
   
   output$tradeoffTableNoPilot <- renderText({
