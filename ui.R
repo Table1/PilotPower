@@ -1,4 +1,5 @@
 library(shiny)
+library(shinyIncubator)
 
 customCSS <- HTML('<link rel="stylesheet" type="text/css" href="assets/custom.css" media="all" />')
 
@@ -9,6 +10,8 @@ shinyUI(pageWithSidebar(
   sidebarPanel(
     tags$head(customCSS),
   
+    progressInit(),
+    
    	helpText(HTML("<h4>Assumed Parameters</h4>")),
   	helpText(HTML("<em>in standard deviation units</em>")),
    	
@@ -47,6 +50,7 @@ shinyUI(pageWithSidebar(
   	
   	numericInput("simulations", "Number of Simulations:", 
   	            min=100, max=100000, value=500, step=100),
+    actionButton('update', 'Update Simulation'),
     HTML('<hr>'),
     HTML('<div style="width: 190px; position: relative; margin: 0 auto;"><img src="assets/GitHub-Mark-32px.png" style="float: left; width: 16px;"> <span style="position: relative; margin: 0 0 0 8px; bottom: 2px; font-size: 1.15em;"><a href="https://github.com/Table1/PilotPower">PilotPower on GitHub</a></span></div>')
   ),
@@ -67,7 +71,7 @@ shinyUI(pageWithSidebar(
 	    tabPanel("2. Proceed Decision",
 	    	HTML("Based upon our simulated data, the below table lists how often across simulations we would proceed to a full trial when applying certain decision rules to our pilot study results.<br><br>"),
 	    	tableOutput("proceedResults"),
-			htmlOutput("proceedMethodNotice")	    	
+		  	htmlOutput("proceedMethodNotice")	    	
 	    ),
 	    tabPanel("3. Power Calculation",	
 	    	HTML("We now do a power analysis to determine the sample size required to detect effects of a certain size in a full trial.  This is done in two ways: once using the pre-determined clinically significant effect size, and once using the effect size seen in the simulated pilot study.  The table below shows, across all simulations, the average sample size needed to detect effects in a full trial.<br><br>"),
@@ -128,7 +132,7 @@ shinyUI(pageWithSidebar(
 					htmlOutput("implicationsProceedStatsNotice"),
 					tableOutput("implicationsProceedStats")
 	    		),
-	    		tabPanel("Summary of Power Loss",
+	    		tabPanel("Summary of Achieved Power",
 	    			htmlOutput("powerSettings"),	    		
 					tabsetPanel(
 						tabPanel("Using Pilot Effect Size to Calculate Sample Size",
