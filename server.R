@@ -144,7 +144,7 @@ shinyServer(function(input, output, session) {
   simulatePilots <- function(pilotN, trueEffect, alpha, power, clinSig, totalSim){
     
     progress <- Progress$new(session)
-    progress$set(message = 'Step One: Simulating pilot studies', value = 0)
+    progress$set(message = 'Simulating pilot studies', value = 0)
 
     
     cxMeans <- matrix(NA, nrow=totalSim, ncol=1)
@@ -470,7 +470,7 @@ shinyServer(function(input, output, session) {
   
   pilotStudyPowerCalculation <- function(data, alpha, power, proceedMethod, clinSig, totalSim, limit){
     progress <- Progress$new(session)
-    progress$set(message = 'Step Three: Conducting power calculations', value = 0)  
+    progress$set(message = 'Conducting power calculations', value = 0)  
     
     sample_size <- matrix(NA, nrow=totalSim, ncol=1)
     
@@ -737,7 +737,7 @@ shinyServer(function(input, output, session) {
   # Function to simulate full trial  
   simulateFullTrial <- function(pilot_data, sample_data, trueEffect, alpha, proceedMethod, clinSig, totalSim){
     
-    progressMessage <- 'Step Four: Simulating full trials'
+    progressMessage <- 'Simulating full trials'
     
     if(length(sample_data) == 1){
       progressMessage <- paste(progressMessage, 'using practically significant effect size')
