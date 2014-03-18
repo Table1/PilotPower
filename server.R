@@ -699,7 +699,7 @@ shinyServer(function(input, output, session) {
   })  
   
   output$downloadPowerCalcPilotPlotPNG <- downloadHandler(
-    filename = function() { paste('pilotDensityPlot', Sys.Date(), '.png', sep='') },
+    filename = function() { paste('sampleSizePilotESDensityPlot', Sys.Date(), '.png', sep='') },
     content = function(file) {
       png(file, width=960)
       print(powerCalcPilotStudyPlotDownloadPNG())
@@ -708,7 +708,7 @@ shinyServer(function(input, output, session) {
   ) 
   
   output$downloadPowerCalcPilotPlotPDF <- downloadHandler(
-    filename = function() { paste('pilotDensityPlot', Sys.Date(), '.pdf', sep='') },
+    filename = function() { paste('sampleSizePilotESDensityPlot', Sys.Date(), '.pdf', sep='') },
     content = function(file) {
       pdf(file, width=10)
       print(powerCalcPilotStudyPlotDownloadPDF())
@@ -717,7 +717,7 @@ shinyServer(function(input, output, session) {
   )   
   
   output$downloadPowerCalcPilotPlotEPS <- downloadHandler(
-    filename = function() { paste('pilotDensityPlot', Sys.Date(), '.eps', sep='') },
+    filename = function() { paste('sampleSizePilotESDensityPlot', Sys.Date(), '.eps', sep='') },
     content = function(file) {
       setEPS()
       postscript(file, width=10)
