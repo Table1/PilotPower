@@ -261,8 +261,8 @@ shinyServer(function(input, output, session) {
   
   
   output$pilotStudyPlot <- renderPlot({
-    plot(densControl(), xlim = xlim(), ylim = ylim(), xlab = 'Effect Sizes',
-         main = 'Smoothed Distribution of Effect Sizes by Treatment Group', 
+    plot(densControl(), xlim = xlim(), ylim = ylim(), xlab = 'Outcome Mean',
+         main = 'Outcome Means by Treatment Group Across Simulations', 
          panel.first = grid())
     
     polygon(densControl(), density = -1, col = controlColor)
@@ -277,8 +277,8 @@ shinyServer(function(input, output, session) {
   # Annoyingly, this requires us to recreate the plot.  If I create the plot with a reactive function and call
   # the download link doesn't work.  Others have had this problem (e.g., see: https://groups.google.com/forum/#!msg/shiny-discuss/u7gwXc8_vyY/eFJtnMDTTUUJ)
   pilotStudyPlotDownloadPNG <- reactive({
-    plot(densControl(), xlim = xlim(), ylim = ylim(), xlab = 'Effect Sizes',
-         main = 'Smoothed Distribution of Effect Sizes by Treatment Group', 
+    plot(densControl(), xlim = xlim(), ylim = ylim(), xlab = 'Outcome Mean',
+         main = 'Outcome Means by Treatment Group Across Simulations', 
          panel.first = grid())
     
     polygon(densControl(), density = -1, col = controlColor)
@@ -290,8 +290,8 @@ shinyServer(function(input, output, session) {
   })
   
   pilotStudyPlotDownloadPDF <- reactive({
-    plot(densControl(), xlim = xlim(), ylim = ylim(), xlab = 'Effect Sizes',
-         main = 'Smoothed Distribution of Effect Sizes by Treatment Group', 
+    plot(densControl(), xlim = xlim(), ylim = ylim(), xlab = 'Outcome Mean',
+         main = 'Outcome Means by Treatment Group Across Simulations', 
          panel.first = grid())
     
     polygon(densControl(), density = -1, col = controlColor)
@@ -303,8 +303,8 @@ shinyServer(function(input, output, session) {
   })
   
   pilotStudyPlotDownloadEPS <- reactive({
-    plot(densControl(), xlim = xlim(), ylim = ylim(), xlab = 'Effect Sizes',
-         main = 'Smoothed Distribution of Effect Sizes by Treatment Group', 
+    plot(densControl(), xlim = xlim(), ylim = ylim(), xlab = 'Outcome Mean',
+         main = 'Outcome Means by Treatment Group Across Simulations', 
          panel.first = grid())
     
     polygon(densTreatment(), density = 10, lty = 'dashed', angle=45)
@@ -617,7 +617,7 @@ shinyServer(function(input, output, session) {
     layout(rbind(1,2), heights=c(7,1))  # put legend on bottom 1/8th of the chart
     
     plot(densSampleSizes(), xlab = 'Sample Size',
-         main = 'Smoothed Distribution of Sample Sizes Calculated Using Observed Pilot Study Effect Size', 
+         main = 'Sample Sizes Calculated Using Observed Pilot Study Effect Size', 
          panel.first = grid())
     
     abline(v=clinSigTrialSampleSize()) # practical significance
@@ -642,7 +642,7 @@ shinyServer(function(input, output, session) {
     layout(rbind(1,2), heights=c(7,1))  # put legend on bottom 1/8th of the chart
     
     plot(densSampleSizes(), xlab = 'Sample Size',
-         main = 'Smoothed Distribution of Sample Sizes Calculated Using Observed Pilot Study Effect Size', 
+         main = 'Sample Sizes Calculated Using Observed Pilot Study Effect Size', 
          panel.first = grid())
     
     abline(v=clinSigTrialSampleSize()) # practical significance
@@ -662,7 +662,7 @@ shinyServer(function(input, output, session) {
     layout(rbind(1,2), heights=c(7,1))  # put legend on bottom 1/8th of the chart
     
     plot(densSampleSizes(), xlab = 'Sample Size',
-         main = 'Smoothed Distribution of Sample Sizes Calculated Using Observed Pilot Study Effect Size', 
+         main = 'Sample Sizes Calculated Using Observed Pilot Study Effect Size', 
          panel.first = grid())
     
     abline(v=clinSigTrialSampleSize()) # practical significance
@@ -682,7 +682,7 @@ shinyServer(function(input, output, session) {
     layout(rbind(1,2), heights=c(7,1))  # put legend on bottom 1/8th of the chart
     
     plot(densSampleSizes(), xlab = 'Sample Size',
-         main = 'Smoothed Distribution of Sample Sizes Calculated Using Observed Pilot Study Effect Size', 
+         main = 'Sample Sizes Calculated Using Observed Pilot Study Effect Size', 
          panel.first = grid())
     
     abline(v=clinSigTrialSampleSize()) # practical significance
@@ -901,8 +901,8 @@ shinyServer(function(input, output, session) {
   
   # Combined plot
   output$fullTrialDensityPlot <- renderPlot({
-    plot(trialDensControl(), xlim = trialXlim(), ylim = trialYlim(), xlab = 'Effect Sizes',
-         main = 'Smoothed Distribution of Effect Sizes by Treatment Group', 
+    plot(trialDensControl(), xlim = trialXlim(), ylim = trialYlim(), xlab = 'Outcome Mean',
+         main = 'Outcome Means by Treatment Group Across Simulations', 
          panel.first = grid())
     
     polygon(trialDensControl(), density = -1, col = trialControlColor)
@@ -915,8 +915,8 @@ shinyServer(function(input, output, session) {
   
   # Download links  
   fullTrialPilotPoweredPlotDownloadPNG <- reactive({
-    plot(trialDensControl(), xlim = trialXlim(), ylim = trialYlim(), xlab = 'Effect Sizes',
-         main = 'Smoothed Distribution of Effect Sizes by Treatment Group', 
+    plot(trialDensControl(), xlim = trialXlim(), ylim = trialYlim(), xlab = 'Outcome Mean',
+         main = 'Outcome Means by Treatment Group Across Simulations', 
          panel.first = grid())
     
     polygon(trialDensControl(), density = -1, col = trialControlColor)
@@ -928,8 +928,8 @@ shinyServer(function(input, output, session) {
   })
   
   fullTrialPilotPoweredPlotDownloadPDF <- reactive({
-    plot(trialDensControl(), xlim = trialXlim(), ylim = trialYlim(), xlab = 'Effect Sizes',
-         main = 'Smoothed Distribution of Effect Sizes by Treatment Group', 
+    plot(trialDensControl(), xlim = trialXlim(), ylim = trialYlim(), xlab = 'Outcome Mean',
+         main = 'Outcome Means by Treatment Group Across Simulations', 
          panel.first = grid())
     
     polygon(trialDensControl(), density = -1, col = trialControlColor)
@@ -941,8 +941,8 @@ shinyServer(function(input, output, session) {
   })
   
   fullTrialPilotPoweredPlotDownloadEPS <- reactive({
-    plot(trialDensControl(), xlim = trialXlim(), ylim = trialYlim(), xlab = 'Effect Sizes',
-         main = 'Smoothed Distribution of Effect Sizes by Treatment Group', 
+    plot(trialDensControl(), xlim = trialXlim(), ylim = trialYlim(), xlab = 'Outcome Mean',
+         main = 'Outcome Means by Treatment Group Across Simulations', 
          panel.first = grid())
     
     polygon(trialDensControl(), density = -1, lty = 'solid')
@@ -1083,8 +1083,8 @@ shinyServer(function(input, output, session) {
   
   # Combined plot
   output$noPilotFullTrialDensityPlot <- renderPlot({
-    plot(noPilotTrialDensControl(), xlim = noPilotTrialXlim(), ylim = noPilotTrialYlim(), xlab = 'Effect Sizes',
-         main = 'Smoothed Distribution of Effect Sizes by Treatment Group', 
+    plot(noPilotTrialDensControl(), xlim = noPilotTrialXlim(), ylim = noPilotTrialYlim(), xlab = 'Outcome Mean',
+         main = 'Outcome Means by Treatment Group Across Simulations', 
          panel.first = grid())
     
     polygon(noPilotTrialDensControl(), density = -1, col = noPilotTrialControlColor)
@@ -1097,8 +1097,8 @@ shinyServer(function(input, output, session) {
   
   # Download links  
   fullTrialPracticalPoweredPlotDownloadPNG <- reactive({
-    plot(noPilotTrialDensControl(), xlim = noPilotTrialXlim(), ylim = noPilotTrialYlim(), xlab = 'Effect Sizes',
-         main = 'Smoothed Distribution of Effect Sizes by Treatment Group', 
+    plot(noPilotTrialDensControl(), xlim = noPilotTrialXlim(), ylim = noPilotTrialYlim(), xlab = 'Outcome Mean',
+         main = 'Outcome Means by Treatment Group Across Simulations', 
          panel.first = grid())
     
     polygon(noPilotTrialDensControl(), density = -1, col = noPilotTrialControlColor)
@@ -1110,8 +1110,8 @@ shinyServer(function(input, output, session) {
   })
   
   fullTrialPracticalPoweredPlotDownloadPDF <- reactive({
-    plot(noPilotTrialDensControl(), xlim = noPilotTrialXlim(), ylim = noPilotTrialYlim(), xlab = 'Effect Sizes',
-         main = 'Smoothed Distribution of Effect Sizes by Treatment Group', 
+    plot(noPilotTrialDensControl(), xlim = noPilotTrialXlim(), ylim = noPilotTrialYlim(), xlab = 'Outcome Mean',
+         main = 'Outcome Means by Treatment Group Across Simulations', 
          panel.first = grid())
     
     polygon(noPilotTrialDensControl(), density = -1, col = noPilotTrialControlColor)
@@ -1123,8 +1123,8 @@ shinyServer(function(input, output, session) {
   })
   
   fullTrialPracticalPoweredPlotDownloadEPS <- reactive({
-    plot(noPilotTrialDensControl(), xlim = noPilotTrialXlim(), ylim = noPilotTrialYlim(), xlab = 'Effect Sizes',
-         main = 'Smoothed Distribution of Effect Sizes by Treatment Group', 
+    plot(noPilotTrialDensControl(), xlim = noPilotTrialXlim(), ylim = noPilotTrialYlim(), xlab = 'Outcome Mean',
+         main = 'Outcome Means by Treatment Group Across Simulations', 
          panel.first = grid())
     
     polygon(noPilotTrialDensControl(), density = -1, lty = 'solid')
