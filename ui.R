@@ -37,10 +37,8 @@ shinyUI(pageWithSidebar(
   	selectInput("proceed_method", "Basis To Conduct Full Trial:",
   		list("Point Estimate Comparison: pilot study effect size greater than practically significant effect size" = "pointestimate_practical",
   		"Point Estimate Comparison: pilot study effect size greater than zero" = "pointestimate_zero",
-  		"T-Test: pilot study effect size not equal to zero (Two-tail Test)" = "ttest_twotail",
-  		"T-Test: pilot study effect size greater than zero (One-tail Test)" = "ttest_onetail",
-  		"T-Test vs. Practical Significance: pilot study effect size not equal to practically significant effect size (Two-tail Test)" = "ttest_practical_twotail",
-  		"T-Test vs. Practical Significance: pilot study effect size greater than practically significant effect size (One-tail Test)" = "ttest_practical_onetail",
+  		"T-Test: pilot study effect size not equal to zero (Two-tailed Test)" = "ttest_twotail",
+  		"T-Test: pilot study effect size greater than zero (One-tailed Test)" = "ttest_onetail",
   		"Always" = "always")),
   	            
   	

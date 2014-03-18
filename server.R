@@ -159,11 +159,6 @@ shinyServer(function(input, output, session) {
     tTwoSampleOneTail <- matrix(NA, nrow=totalSim, ncol=1)
     pTwoSampleOneTail <- matrix(NA, nrow=totalSim, ncol=1)
     
-    tClinSigTwoTail <- matrix(NA, nrow=totalSim, ncol=1)
-    pClinSigTwoTail <- matrix(NA, nrow=totalSim, ncol=1)
-    tClinSigOneTail <- matrix(NA, nrow=totalSim, ncol=1)
-    pClinSigOneTail <- matrix(NA, nrow=totalSim, ncol=1)
-    
     for(i in 1:totalSim){
       progress$set(value = (i/totalSim))
       
@@ -178,29 +173,20 @@ shinyServer(function(input, output, session) {
       effectSize <- mean(tx)-mean(cx)
       effectSizes[i] <- effectSize
       
-      # t-test, two sample, two-taileded
+      # t-test, two sample, two-tailed
       tTestTwoSampleTwoTail <- t.test(x=tx, y=cx, alternative="two.sided", var.equal = TRUE, conf.level = alpha)
       tTwoSampleTwoTail[i] <- tTestTwoSampleTwoTail$statistic
       pTwoSampleTwoTail[i] <- tTestTwoSampleTwoTail$p.value
       
-      # t-test, two sample, one-taileded
+      # t-test, two sample, one-tailed
       tTestTwoSampleOneTail <- t.test(x=tx, y=cx, alternative="greater", var.equal = TRUE, conf.level = alpha)
       tTwoSampleOneTail[i] <- tTestTwoSampleOneTail$statistic
       pTwoSampleOneTail[i] <- tTestTwoSampleOneTail$p.value
       
-      # t-test, one sample practical significance comparison, two-tailed
-      tTestClinSigTwoTail <- t.test(x=tx, mu=clinSig, alternative="two.sided", var.equal = TRUE, conf.level = alpha)
-      tClinSigTwoTail[i] <- tTestClinSigTwoTail$statistic
-      pClinSigTwoTail[i] <- tTestClinSigTwoTail$p.value
-      
-      # t-test, two sample, one-taileded
-      tTestClinSigOneTail <- t.test(x=tx, mu=clinSig, alternative="greater", var.equal = TRUE, conf.level = alpha)
-      tClinSigOneTail[i] <- tTestClinSigOneTail$statistic
-      pClinSigOneTail[i] <- tTestClinSigOneTail$p.value
-      
+
     }
     
-    pilot_stats <- data.frame(control_mean = cxMeans, control_sd = cxSDs, treatment_mean = txMeans, treatment_sd = txSDs, effect_size = effectSizes, t_two_sample = tTwoSampleTwoTail, p_two_sample_two_tail = pTwoSampleTwoTail,p_two_sample_one_tail = pTwoSampleOneTail, t_clin_sig = tClinSigTwoTail, p_clin_sig_two_tail = pClinSigTwoTail, p_clin_sig_one_tail = pClinSigOneTail)
+    pilot_stats <- data.frame(control_mean = cxMeans, control_sd = cxSDs, treatment_mean = txMeans, treatment_sd = txSDs, effect_size = effectSizes, t_two_sample = tTwoSampleTwoTail, p_two_sample_two_tail = pTwoSampleTwoTail,p_two_sample_one_tail = pTwoSampleOneTail)
     
     
     progress$set(value = 1)
@@ -403,45 +389,18 @@ shinyServer(function(input, output, session) {
     round((tTwoSampleOneTailCount()/simulations())*100, 2)
   })	
   
-  ## One sample
-  
-  # Two-tailed
-  tClinSigTwoTailCount <- reactive({
-    return(sum(pilotResults()$p_clin_sig_two_tail < alpha()))
-  })
-  
-  tClinSigTwoTailPercent <- reactive({
-    round((tClinSigTwoTailCount()/simulations())*100, 2)
-  })	
-  
-  # One-tailed
-  tClinSigOneTailCount <- reactive({
-    return(sum(pilotResults()$p_clin_sig_one_tail < alpha()))    
-  })
-  
-  tClinSigOneTailPercent <- reactive({
-    round((tClinSigOneTailCount()/simulations())*100, 2)
-  })
-  
-  
   proceedStats <- reactive({	
     # Compose data frame
     data.frame(
-      Proceed = c("If effect size point estimate is greater than 0",
-                  "If effect size point estimate is greater than practically significant effect size",
+      Proceed = c("If effect size point estimate is greater than practically significant effect size",
+                  "If effect size point estimate is greater than 0",
                   "If treatment mean greater than control mean (one-tailed t-test)",
-                  "If treatment mean not equal to control mean (two-tailed t-test)",
-                  "If treatment mean greater than practically significant effect size (one-tailed t-test)",
-                  "If treatment mean not equal to practically significant effect size (two-tailed t-test)",
-                  "Always"						
+                  "If treatment mean not equal to control mean (two-tailed t-test)"
       ),
-      Percent = as.character(c(pointEstimateZeroPercent(),
-                               pointEstimateClinSigPercent(),			
+      Percent = as.character(c(pointEstimateClinSigPercent(),
+                               pointEstimateZeroPercent(),
                                tTwoSampleOneTailPercent(),
-                               tTwoSampleTwoTailPercent(),
-                               tClinSigOneTailPercent(),
-                               tClinSigTwoTailPercent(),
-                               100
+                               tTwoSampleTwoTailPercent()
       )), 
       stringsAsFactors=FALSE)
   }) 		
@@ -461,10 +420,6 @@ shinyServer(function(input, output, session) {
       description <- c('proceed to a full trial whenever the pilot study effect size is statistically significantly different from 0.')
     } else if(proceedMethod == "ttest_onetail"){
       description <- c('proceed to a full trial whenever the pilot study effect size is statistically significantly greater than 0.')
-    } else if(proceedMethod == "ttest_practical_twotail"){
-      description <- c('proceed to a full trial whenever the pilot study effect size is statistically significantly different from  the practically significant effect size.')
-    } else if(proceedMethod == "ttest_practical_onetail"){
-      description <- c('proceed to a full trial whenever the pilot study effect size is statistically significantly greater than  the practically significant effect size.')
     } else if(proceedMethod == 'always'){
       description <- 'proceed to a full trial regardless of the pilot study effect size.'
     }
@@ -811,11 +766,6 @@ shinyServer(function(input, output, session) {
     tTwoSampleOneTail <- matrix(NA, nrow=totalSim, ncol=1)
     pTwoSampleOneTail <- matrix(NA, nrow=totalSim, ncol=1)
     
-    tClinSigTwoTail <- matrix(NA, nrow=totalSim, ncol=1)
-    pClinSigTwoTail <- matrix(NA, nrow=totalSim, ncol=1)
-    tClinSigOneTail <- matrix(NA, nrow=totalSim, ncol=1)
-    pClinSigOneTail <- matrix(NA, nrow=totalSim, ncol=1)
-    
     for(i in 1:totalSim){
       progress$set(value = (i/totalSim))
       
@@ -840,12 +790,6 @@ shinyServer(function(input, output, session) {
       } else if(proceedMethod == "ttest_onetail"){
         p_two_sampleone_tail = pilotRow$p_two_sample_one_tail
         ifelse(p_two_sampleone_tail < alpha, proceed <- 1, NA)
-      } else if(proceedMethod == "ttest_practical_twotail"){
-        p_clin_sig_two_tail = pilotRow$p_clin_sig_two_tail
-        ifelse(p_clin_sig_two_tail < alpha, proceed <- 1, NA)
-      } else if(proceedMethod == "ttest_practical_onetail"){
-        p_clin_sig_one_tail = pilotRow$p_clin_sig_one_tail
-        ifelse(p_clin_sig_one_tail < alpha, proceed <- 1, NA)
       } else if(proceedMethod == "always"){
         proceed <- 1
       }
@@ -877,23 +821,12 @@ shinyServer(function(input, output, session) {
         tTwoSampleOneTail[i] <- tTestTwoSampleOneTail$statistic
         pTwoSampleOneTail[i] <- tTestTwoSampleOneTail$p.value
         
-        # t-test, one sample practical significance comparison, two-tailed
-        tTestClinSigTwoTail <- t.test(x=tx, mu=clinSig, alternative="two.sided", var.equal = TRUE, conf.level = alpha)
-        tClinSigTwoTail[i] <- tTestClinSigTwoTail$statistic
-        pClinSigTwoTail[i] <- tTestClinSigTwoTail$p.value
-        
-        # t-test, two sample, one-tailed		      
-        tTestClinSigOneTail <- t.test(x=tx, mu=clinSig, alternative="greater", var.equal = TRUE, conf.level = alpha)
-        tClinSigOneTail[i] <- tTestClinSigOneTail$statistic
-        pClinSigOneTail[i] <- tTestClinSigOneTail$p.value
-        
-        
       } else {
         proceedStatus[i] <- 0
       }			
     }
     
-    trial_stats <- data.frame(proceed_status = proceedStatus, pilot_treatment_mean = pilotTxMeans, pilot_control_mean = pilotCxMeans, pilot_effect_size = pilotEffectSizes, sample_size = sampleSizes, group_size = groupSizes, control_mean = cxMeans, control_sd = cxSDs, treatment_mean = txMeans, treatment_sd = txSDs, effect_size = effectSizes, t_two_sample = tTwoSampleTwoTail, p_two_sample_two_tail = pTwoSampleTwoTail,p_two_sample_one_tail = pTwoSampleOneTail, t_clin_sig = tClinSigTwoTail, p_clin_sig_two_tail = pClinSigTwoTail, p_clin_sig_one_tail = pClinSigOneTail)
+    trial_stats <- data.frame(proceed_status = proceedStatus, pilot_treatment_mean = pilotTxMeans, pilot_control_mean = pilotCxMeans, pilot_effect_size = pilotEffectSizes, sample_size = sampleSizes, group_size = groupSizes, control_mean = cxMeans, control_sd = cxSDs, treatment_mean = txMeans, treatment_sd = txSDs, effect_size = effectSizes, t_two_sample = tTwoSampleTwoTail, p_two_sample_two_tail = pTwoSampleTwoTail,p_two_sample_one_tail = pTwoSampleOneTail)
     
     progress$set(value = 1)
     Sys.sleep(0.1)
@@ -1090,46 +1023,6 @@ shinyServer(function(input, output, session) {
     round((FullTrialTTwoSampleOneTailCountGTTrueEffect()/FullTrialTTwoSampleOneTailCount())*100, 2)
   })	
   
-  ## One sample
-  
-  # Two-tailed
-  FullTrialTClinSigTwoTailCount <- reactive({
-    sum(trialResults()$p_clin_sig_two_tail < alpha(), na.rm = TRUE)
-  })
-  
-  FullTrialTClinSigTwoTailPercent <- reactive({
-    round((FullTrialTClinSigTwoTailCount()/proceedCount())*100, 2)
-  })	
-  
-  # how often over-estimate effect given positive effect
-  FullTrialTClinSigTwoTailCountGTTrueEffect <- reactive({
-    sum(trialResults()$p_clin_sig_two_tail < alpha() & trialResults()$effect_size > true_effect_size(), na.rm = TRUE)
-  })
-  
-  FullTrialTClinSigTwoTailCountGTTrueEffectPercent <- reactive({
-    round((FullTrialTClinSigTwoTailCountGTTrueEffect()/FullTrialTClinSigTwoTailCount())*100, 2)
-  })	
-  
-  
-  # One-tailed
-  FullTrialTClinSigOneTailCount <- reactive({
-    sum(trialResults()$p_clin_sig_one_tail < alpha(), na.rm = TRUE)
-  })
-  
-  FullTrialTClinSigOneTailPercent <- reactive({
-    round((FullTrialTClinSigOneTailCount()/proceedCount())*100, 2)
-  })
-  
-  # how often over-estimate effect given positive effect
-  FullTrialTClinSigOneTailCountGTTrueEffect <- reactive({
-    sum(trialResults()$p_clin_sig_one_tail < alpha() & trialResults()$effect_size > true_effect_size(), na.rm = TRUE)
-  })
-  
-  FullTrialTClinSigOneTailCountGTTrueEffectPercent <- reactive({
-    round((FullTrialTClinSigOneTailCountGTTrueEffect()/FullTrialTClinSigOneTailCount())*100, 2)
-  })	  
-  
-  
   ## No Pilot Study
   # repeat, but only use practically significant calculated sample size
   noPilotTrialResults <- reactive({
@@ -1312,44 +1205,6 @@ shinyServer(function(input, output, session) {
     round((noPilotFullTrialTTwoSampleOneTailCountGTTrueEffect()/noPilotFullTrialTTwoSampleOneTailCount())*100, 2)
   })
   
-  ## One sample
-  
-  # Two-tailed
-  noPilotFullTrialTClinSigTwoTailCount <- reactive({
-    sum(noPilotTrialResults()$p_clin_sig_two_tail < alpha(), na.rm = TRUE)
-  })
-  
-  noPilotFullTrialTClinSigTwoTailPercent <- reactive({
-    round((noPilotFullTrialTClinSigTwoTailCount()/proceedCount())*100, 2)
-  })	
-  
-  # how often over-estimate effect given positive effect
-  noPilotFullTrialTClinSigTwoTailCountGTTrueEffect <- reactive({
-    sum(noPilotTrialResults()$p_clin_sig_two_tail < alpha() & trialResults()$effect_size > true_effect_size(), na.rm = TRUE)
-  })
-  
-  noPilotFullTrialTClinSigTwoTailCountGTTrueEffectPercent <- reactive({
-    round((noPilotFullTrialTClinSigTwoTailCountGTTrueEffect()/noPilotFullTrialTClinSigTwoTailCount())*100, 2)
-  })  
-  
-  # One-tailed
-  noPilotFullTrialTClinSigOneTailCount <- reactive({
-    sum(noPilotTrialResults()$p_clin_sig_one_tail < alpha(), na.rm = TRUE)
-  })
-  
-  noPilotFullTrialTClinSigOneTailPercent <- reactive({
-    round((noPilotFullTrialTClinSigOneTailCount()/proceedCount())*100, 2)
-  })
-  
-  # how often over-estimate effect given positive effect
-  noPilotFullTrialTClinSigOneTailCountGTTrueEffect <- reactive({
-    sum(noPilotTrialResults()$p_clin_sig_one_tail < alpha() & trialResults()$effect_size > true_effect_size(), na.rm = TRUE)
-  })
-  
-  noPilotFullTrialTClinSigOneTailCountGTTrueEffectPercent <- reactive({
-    round((noPilotFullTrialTClinSigOneTailCountGTTrueEffect()/noPilotFullTrialTClinSigOneTailCount())*100, 2)
-  })  
-  
   ###################################################  
   ### STEP 5.  Interpret results
   ###################################################
@@ -1363,14 +1218,10 @@ shinyServer(function(input, output, session) {
     # Compose data frame
     data.frame(
       Inference = c("Reject Null Hypothesis: Full trial treatment mean is not equal to control mean (two-tailed t-test)",
-                    "Reject Null Hypothesis: Full trial treatment mean greater than control mean (one-tailed t-test)",
-                    "Reject Null Hypothesis: Full trial treatment mean not equal to practically significant effect size (two-tailed t-test)",
-                    "Reject Null Hypothesis: Full trial treatment mean greater than practically significant effect size (one-tailed t-test)"						
+                    "Reject Null Hypothesis: Full trial treatment mean greater than control mean (one-tailed t-test)"					
       ),
       Percent = as.character(c(FullTrialTTwoSampleTwoTailPercent(),
-                               FullTrialTTwoSampleOneTailPercent(),
-                               FullTrialTClinSigTwoTailPercent(),
-                               FullTrialTClinSigOneTailPercent()									
+                               FullTrialTTwoSampleOneTailPercent()
       )), 
       stringsAsFactors=FALSE)
   }) 		
@@ -1384,14 +1235,10 @@ shinyServer(function(input, output, session) {
     # Compose data frame
     data.frame(
       Inference = c("Reject Null Hypothesis: Full trial treatment mean is not equal to control mean (two-tailed t-test)",
-                    "Reject Null Hypothesis: Full trial treatment mean greater than control mean (one-tailed t-test)",
-                    "Reject Null Hypothesis: Full trial treatment mean not equal to practically significant effect size (two-tailed t-test)",
-                    "Reject Null Hypothesis: Full trial treatment mean greater than practically significant effect size (one-tailed t-test)"						
+                    "Reject Null Hypothesis: Full trial treatment mean greater than control mean (one-tailed t-test)"					
       ),
       Percent = as.character(c(noPilotFullTrialTTwoSampleTwoTailPercent(),
-                               noPilotFullTrialTTwoSampleOneTailPercent(),
-                               noPilotFullTrialTClinSigTwoTailPercent(),
-                               noPilotFullTrialTClinSigOneTailPercent()									
+                               noPilotFullTrialTTwoSampleOneTailPercent()							
       )), 
       stringsAsFactors=FALSE)
   }) 		
@@ -1455,30 +1302,21 @@ shinyServer(function(input, output, session) {
       "Proceed if effect size point estimate is greater than 0",
       "Proceed if effect size point estimate is greater than practically significant effect size",
       "Proceed if treatment mean greater than control mean (one-tailed t-test)",						
-      "Proceed if treatment mean not equal to control mean (two-tailed t-test)",
-      "Proceed if treatment mean greater than practically significant effect size (one-tailed t-test)",
-      "Proceed if treatment mean not equal to practically significant effect size (two-tailed t-test)",
-      "Proceed always"						
+      "Proceed if treatment mean not equal to control mean (two-tailed t-test)"
     )
     
     proceed <- as.character(c(
       pointEstimateZeroPercent(),
       pointEstimateClinSigPercent(),
       tTwoSampleOneTailPercent(),
-      tTwoSampleTwoTailPercent(),
-      tClinSigOneTailPercent(),
-      tClinSigTwoTailPercent(),
-      100
+      tTwoSampleTwoTailPercent()
     ))
     
     stop <- as.character(c(
       100-pointEstimateZeroPercent(),
       100-pointEstimateClinSigPercent(),
       100-tTwoSampleOneTailPercent(),
-      100-tTwoSampleTwoTailPercent(),
-      100-tClinSigOneTailPercent(),
-      100-tClinSigTwoTailPercent(),
-      0
+      100-tTwoSampleTwoTailPercent()
     ))
     
     if(shouldProceed == 1 | shouldProceed == 2){
@@ -1552,12 +1390,6 @@ shinyServer(function(input, output, session) {
     } else if(proceed_method == "ttest_onetail"){
       conduct_trial_n <- tTwoSampleOneTailCount()
       conduct_trial_percent <- tTwoSampleOneTailPercent()
-    } else if(proceed_method == "ttest_practical_twotail"){
-      conduct_trial_n <- tClinSigTwoTailCount()
-      conduct_trial_percent <- tClinSigTwoTailPercent()
-    } else if(proceed_method == "ttest_practical_onetail"){
-      conduct_trial_n <- tClinSigOneTailCount()
-      conduct_trial_percent <- tClinSigOneTailPercent()
     } else if(proceed_method == 'always'){
       conduct_trial_n <- simulations()
       conduct_trial_percent <- 100
@@ -1590,31 +1422,6 @@ shinyServer(function(input, output, session) {
     onetail_diff_achieved_power_all <- onetail_diff_reject_null_all_percent/100
     onetail_diff_total_power_loss <- (100 - onetail_diff_reject_null_all_percent)/100
     onetail_diff_reject_null_partial_power_loss <- onetail_diff_total_power_loss - proceed_partial_power_loss
-    
-    
-    twotail_clinsig_reject_null_n <- FullTrialTClinSigTwoTailCount()
-    twotail_clinsig_reject_null_percent <- FullTrialTClinSigTwoTailPercent()
-    
-    twotail_clinsig_reject_null_n_lt_true <- FullTrialTClinSigTwoTailCountGTTrueEffect()
-    twotail_clinsig_reject_null_n_lt_true_percent <- FullTrialTClinSigTwoTailCountGTTrueEffectPercent()		
-    
-    twotail_clinsig_reject_null_all_percent <- (twotail_clinsig_reject_null_n/simulations_count)*100
-    twotail_clinsig_total_power_loss <- (100 - twotail_clinsig_reject_null_all_percent)/100
-    twotail_clinsig_reject_null_partial_power_loss <- twotail_clinsig_total_power_loss - proceed_partial_power_loss
-    twotail_clinsig_achieved_power_full_trial <- twotail_clinsig_reject_null_percent/100
-    twotail_clinsig_achieved_power_all <- twotail_clinsig_reject_null_all_percent/100
-    
-    onetail_clinsig_reject_null_n <- FullTrialTClinSigOneTailCount()
-    onetail_clinsig_reject_null_percent <- FullTrialTClinSigOneTailPercent()
-    
-    onetail_clinsig_reject_null_n_lt_true <- FullTrialTClinSigOneTailCountGTTrueEffect()
-    onetail_clinsig_reject_null_n_lt_true_percent <- FullTrialTClinSigOneTailCountGTTrueEffectPercent()		
-    
-    onetail_clinsig_reject_null_all_percent <- (onetail_clinsig_reject_null_n/simulations_count)*100
-    onetail_clinsig_achieved_power_full_trial <- onetail_clinsig_reject_null_percent/100
-    onetail_clinsig_achieved_power_all <- onetail_clinsig_reject_null_all_percent/100
-    onetail_clinsig_total_power_loss <- (100 - onetail_clinsig_reject_null_all_percent)/100
-    onetail_clinsig_reject_null_partial_power_loss <- onetail_clinsig_total_power_loss - proceed_partial_power_loss
     
     #Treatment mean is not equal to control mean (two-tailed t-test)
     
@@ -1707,12 +1514,6 @@ shinyServer(function(input, output, session) {
     } else if(proceed_method == "ttest_onetail"){
       conduct_trial_n <- tTwoSampleOneTailCount()
       conduct_trial_percent <- tTwoSampleOneTailPercent()
-    } else if(proceed_method == "ttest_practical_twotail"){
-      conduct_trial_n <- tClinSigTwoTailCount()
-      conduct_trial_percent <- tClinSigTwoTailPercent()
-    } else if(proceed_method == "ttest_practical_onetail"){
-      conduct_trial_n <- tClinSigOneTailCount()
-      conduct_trial_percent <- tClinSigOneTailPercent()
     } else if(proceed_method == 'always'){
       conduct_trial_n <- simulations()
       conduct_trial_percent <- 100
@@ -1743,30 +1544,6 @@ shinyServer(function(input, output, session) {
     onetail_diff_achieved_power_all <- onetail_diff_reject_null_all_percent/100
     onetail_diff_total_power_loss <- (100 - onetail_diff_reject_null_all_percent)/100
     onetail_diff_reject_null_partial_power_loss <- onetail_diff_total_power_loss - proceed_partial_power_loss
-    
-    twotail_clinsig_reject_null_n <- noPilotFullTrialTClinSigTwoTailCount()
-    twotail_clinsig_reject_null_percent <- noPilotFullTrialTClinSigTwoTailPercent()
-    
-    twotail_clinsig_reject_null_n_lt_true <- noPilotFullTrialTClinSigTwoTailCountGTTrueEffect()
-    twotail_clinsig_reject_null_n_lt_true_percent <- noPilotFullTrialTClinSigTwoTailCountGTTrueEffectPercent()
-    
-    twotail_clinsig_reject_null_all_percent <- (twotail_clinsig_reject_null_n/simulations_count)*100
-    twotail_clinsig_total_power_loss <- (100 - twotail_clinsig_reject_null_all_percent)/100
-    twotail_clinsig_reject_null_partial_power_loss <- twotail_clinsig_total_power_loss - proceed_partial_power_loss
-    twotail_clinsig_achieved_power_full_trial <- twotail_clinsig_reject_null_percent/100
-    twotail_clinsig_achieved_power_all <- twotail_clinsig_reject_null_all_percent/100
-    
-    onetail_clinsig_reject_null_n <- noPilotFullTrialTClinSigOneTailCount()
-    onetail_clinsig_reject_null_percent <- noPilotFullTrialTClinSigOneTailPercent()
-    
-    onetail_clinsig_reject_null_n_lt_true <- noPilotFullTrialTClinSigOneTailCountGTTrueEffect()
-    onetail_clinsig_reject_null_n_lt_true_percent <- noPilotFullTrialTClinSigOneTailCountGTTrueEffectPercent()    
-    
-    onetail_clinsig_reject_null_all_percent <- (onetail_clinsig_reject_null_n/simulations_count)*100
-    onetail_clinsig_achieved_power_full_trial <- onetail_clinsig_reject_null_percent/100
-    onetail_clinsig_achieved_power_all <- onetail_clinsig_reject_null_all_percent/100
-    onetail_clinsig_total_power_loss <- (100 - onetail_clinsig_reject_null_all_percent)/100
-    onetail_clinsig_reject_null_partial_power_loss <- onetail_clinsig_total_power_loss - proceed_partial_power_loss
     
     #Treatment mean is not equal to control mean (two-tailed t-test)
     
