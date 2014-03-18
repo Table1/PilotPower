@@ -1673,36 +1673,7 @@ shinyServer(function(input, output, session) {
                     <td>', round(onetail_diff_achieved_power_full_trial, 2), '</td>
                     <td>', round(onetail_diff_achieved_power_all, 2), '</td>					
                     </tr>
-
-                    <tr>
-                    <td class="lastCol leftCol">Treatment mean is not equal to practical significance level (two-tailed t-test)</td>
-                    <td>', conduct_trial_n, '/', simulations(), '</td>
-                    <td class="lastCol">', round(conduct_trial_percent, 2), '</td>
-                    <td>', twotail_clinsig_reject_null_n, '/', proceedCount(), '</td>
-                    <td class="lastCol">', round(twotail_clinsig_reject_null_percent, 2), '</td>
-                    <td>', twotail_clinsig_reject_null_n, '/', simulations(), '</td>
-                    <td class="lastCol">', round(twotail_clinsig_reject_null_all_percent, 2), '</td>
-                    <td>', twotail_clinsig_reject_null_n_lt_true, '/', twotail_clinsig_reject_null_n, '</td>
-                    <td class="lastCol">', round(twotail_clinsig_reject_null_n_lt_true_percent, 2), '</td>
-                    <td>', round(twotail_clinsig_achieved_power_full_trial, 2), '</td>
-                    <td>', round(twotail_clinsig_achieved_power_all, 2), '</td>					
-                    </tr>
-
-                    <tr>
-                    <td class="lastCol leftCol">Treatment mean is not equal to practical significance level (one-tailed t-test)</td>
-                    <td>', conduct_trial_n, '/', simulations(), '</td>
-                    <td class="lastCol">', round(conduct_trial_percent, 2), '</td>
-                    <td>', onetail_clinsig_reject_null_n, '/', proceedCount(), '</td>
-                    <td class="lastCol">', round(onetail_clinsig_reject_null_percent, 2), '</td>
-                    <td>', onetail_clinsig_reject_null_n, '/', simulations(), '</td>
-                    <td class="lastCol">', round(onetail_clinsig_reject_null_all_percent, 2), '</td>
-                    <td>', onetail_clinsig_reject_null_n_lt_true, '/', onetail_clinsig_reject_null_n, '</td>
-                    <td class="lastCol">', round(onetail_clinsig_reject_null_n_lt_true_percent, 2), '</td>                    
-                    <td>', round(onetail_clinsig_achieved_power_full_trial, 2), '</td>
-                    <td>', round(onetail_clinsig_achieved_power_all, 2), '</td>					
-                    </tr>				
-                    
-                    
+                                        
                     </table><br><br>
                     ', sep='')
     } else {
@@ -1855,35 +1826,6 @@ shinyServer(function(input, output, session) {
                     <td>', round(onetail_diff_achieved_power_full_trial, 2), '</td>
                     <td>', round(onetail_diff_achieved_power_all, 2), '</td>					
                     </tr>				
-
-                    <tr>
-                    <td class="lastCol leftCol">Treatment mean is not equal to practical significance level (two-tailed t-test)</td>
-                    <td>', conduct_trial_n, '/', simulations(), '</td>
-                    <td class="lastCol">', round(conduct_trial_percent, 2), '</td>
-                    <td>', twotail_clinsig_reject_null_n, '/', proceedCount(), '</td>
-                    <td class="lastCol">', round(twotail_clinsig_reject_null_percent, 2), '</td>
-                    <td>', twotail_clinsig_reject_null_n, '/', simulations(), '</td>
-                    <td class="lastCol">', round(twotail_clinsig_reject_null_all_percent, 2), '</td>
-                    <td>', twotail_clinsig_reject_null_n_lt_true, '/', twotail_clinsig_reject_null_n, '</td>
-                    <td class="lastCol">', round(twotail_clinsig_reject_null_n_lt_true_percent, 2), '</td>
-                    <td>', round(twotail_clinsig_achieved_power_full_trial, 2), '</td>
-                    <td>', round(twotail_clinsig_achieved_power_all, 2), '</td>					
-                    </tr>
-
-                    <tr>
-                    <td class="lastCol leftCol">Treatment mean is not equal to practical significance level (one-tailed t-test)</td>
-                    <td>', conduct_trial_n, '/', simulations(), '</td>
-                    <td class="lastCol">', round(conduct_trial_percent, 2), '</td>
-                    <td>', onetail_clinsig_reject_null_n, '/', proceedCount(), '</td>
-                    <td class="lastCol">', round(onetail_clinsig_reject_null_percent, 2), '</td>
-                    <td>', onetail_clinsig_reject_null_n, '/', simulations(), '</td>
-                    <td class="lastCol">', round(onetail_clinsig_reject_null_all_percent, 2), '</td>
-                    <td>', onetail_clinsig_reject_null_n_lt_true, '/', onetail_clinsig_reject_null_n, '</td>
-                    <td class="lastCol">', round(onetail_clinsig_reject_null_n_lt_true_percent, 2), '</td>
-                    <td>', round(onetail_clinsig_achieved_power_full_trial, 2), '</td>
-                    <td>', round(onetail_clinsig_achieved_power_all, 2), '</td>					
-                    </tr>				
-                    
                     
                     </table><br><br>
                     ', sep='')
