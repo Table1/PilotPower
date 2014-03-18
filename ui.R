@@ -70,13 +70,13 @@ shinyUI(pageWithSidebar(
         value = 1
 	    ),
 	    tabPanel("2. Proceed Decision",
-	    	HTML("Based upon our simulated data, the below table lists how often across simulations we would proceed to a full trial when applying certain decision rules to our pilot study results.<br><br>"),
+	    	HTML("Based upon our simulated data, the below table lists how often across simulations we would proceed to a full trial when applying the below decision rules to our simulated pilot study results.<br><br>"),
 	    	tableOutput("proceedResults"),
 		  	htmlOutput("proceedMethodNotice"),
         value = 2
 	    ),
 	    tabPanel("3. Power Calculation",	
-	    	HTML("We now do a power analysis to determine the sample size required to detect effects of a certain size in a full trial.  This is done in two ways: once using the pre-determined practically significant effect size, and once using the effect size seen in the simulated pilot study.  The table below shows, across all simulations, the average sample size needed to detect effects in a full trial.<br><br>"),
+	    	HTML("We now do a power analysis to determine the sample size required to detect effects of a certain size in a full trial.  This is done in two ways: once using the pre-determined practically significant effect size, and once using the effect size observed in the simulated pilot study.  The table below shows, across all simulations, the average sample size needed to detect effects in a full trial.<br><br>"),
 	    	htmlOutput("proceedPowerCalculateNotice"),	        
 	    	tableOutput("powerResults"),
 	    	htmlOutput("powerCalculationNotice"),

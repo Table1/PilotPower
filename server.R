@@ -449,7 +449,7 @@ shinyServer(function(input, output, session) {
   })
   
   output$powerCalculationNotice <- renderText({
-    paste('<br>Power calculations are based upon two-taileded tests where power (1 - &beta;) = ', power(), '.<br><br>', sep='')
+    paste('<br>Power calculations are based upon two-tailed tests where power (1 - &beta;) = ', power(), '.<br><br>', sep='')
   })	
   
   # Calculate power needed to detect practical significance
