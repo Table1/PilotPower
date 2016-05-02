@@ -1,6 +1,5 @@
 library(shiny)
 library(pwr)
-library(shinyIncubator)
 
 tradeoffTableColumnHeaders <- c("Simulations", "Proceed to Trial", "Found Effect")
 

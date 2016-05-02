@@ -99,3 +99,7 @@
 	font-weight: bold;
 	vertical-align: bottom;
 }
+
+div.tab-content{
+	margin-top: 12px;
+}
