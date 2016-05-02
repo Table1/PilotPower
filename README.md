@@ -1,7 +1,7 @@
 PilotPower
 ==========
 
-Pilot Power is a program to allow research to simulate the implications of using pilot studies to inform research design decisions in experiments. This program is a companion application for the article "Westlund, Erik and Elizabeth A. Stuart. (2016). The Nonuse, Misuse, and Proper Use of Pilot Studies in Experimental Evaluation Research," which is forthcoming in the [American Journal of Evaluation](https://us.sagepub.com/en-us/nam/american-journal-of-evaluation/journal201729).
+Pilot Power is a program to allow research to simulate the implications of using pilot studies to inform research design decisions in experiments. This program is a companion application for the article "Westlund, Erik and Elizabeth A. Stuart. (2016). The Nonuse, Misuse, and Proper Use of Pilot Studies in Experimental Evaluation Research", which is forthcoming in the [American Journal of Evaluation](https://us.sagepub.com/en-us/nam/american-journal-of-evaluation/journal201729).
 
 **Ensuring dependencies are installed**
 
@@ -13,7 +13,7 @@ install.packages(c('pwr', 'shiny'))
 
 **Run PilotPower out of R**
 
-The quickest way to run the app natively on your computer is is to open R, load Shiny, and run from the GitHub repository. You must have the ```devtools``` package installed (```install.packages('devtools')).
+The quickest way to run the app natively on your computer is is to open R, load Shiny, and run from the GitHub repository. You must have the ```devtools``` package installed (```install.packages('devtools')```).
 
 ```
 library(shiny)
