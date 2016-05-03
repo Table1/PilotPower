@@ -5,7 +5,7 @@ Pilot Power is a program to allow research to simulate the implications of using
 
 **Test PilotPower on the web**
 
-A working version of the PilotPower application is available [here](http://pilotpower.table1.org/). This version will be slower to run because it is hosted on a small virtual server. Installing locally following the directions below will result in faster simulations.
+A working version of the PilotPower application is available [here](http://pilotpower.table1.org/). This version may be slow to run because it is hosted on a small virtual server. Installing locally following the directions below will result in faster simulations.
 
 **Ensuring dependencies are installed**
 
