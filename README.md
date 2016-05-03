@@ -3,6 +3,10 @@ PilotPower
 
 Pilot Power is a program to allow research to simulate the implications of using pilot studies to inform research design decisions in experiments. This program is a companion application for the article "Westlund, Erik and Elizabeth A. Stuart. (2016). The Nonuse, Misuse, and Proper Use of Pilot Studies in Experimental Evaluation Research", which is forthcoming in the [American Journal of Evaluation](https://us.sagepub.com/en-us/nam/american-journal-of-evaluation/journal201729).
 
+**Test PilotPower on the web**
+
+A working version of the PilotPower application is available [here](http://pilotpower.table1.org/). This version will be slower to run because it is hosted on a small virtual server. Installing locally following the directions below will result in faster simulations.
+
 **Ensuring dependencies are installed**
 
 Before PilotPower will run on your machine, you will need to make sure you have R installed, and that you have installed the ```shiny``` and ```pwr``` packages:
