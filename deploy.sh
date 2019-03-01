@@ -14,7 +14,6 @@ SHINYWWW=/var/www/pilotpower.table1.org/app/www
 DUNDERASS=$SHINYWWW/__assets__/
 SHAREDASS=$SHINYWWW/assets/shared/
 
-
 #remove shared assets and recopy
 rm -rf $SHAREDASS
 docker cp $CONTAINER:/usr/local/lib/R/site-library/shiny/www/shared/ $SHINYWWW/
